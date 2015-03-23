@@ -1,3 +1,30 @@
+//All Gyros should be in a group called Gyros
+//All thrusters for going Forward Should be in a group for going forward
+//There should Be 11 differnt sensors 6 for the front 2 for the top and 1 for every other side except back
+//Top sensors should be called TS1 and TS2
+//Left sensor SHould be called LS, Right sensor should be called Rs
+//4 of the center Sensors should be arranged it a cross pattern The top one of these should be called TCS
+//The bottom of the cross should be called DCS, the right one RCS and the left one LCS
+//The other two front facing sensor should be called CS1 and CS2 and they can be place anywhere
+//There should be a Timer block that activates this programming block and triggers itsself(Trigger NOW).
+//There should Be a panel called Data 
+// the public text of data should have "CheckpointNum:NUM OF CHECKPOINTS HERE;"
+// the following line should have the check points
+//Check points are written in the following format:
+//x1:0;//x of point 1
+//y1:0;//y of point 1
+//z1:0;//z of point 1
+//x2:10;//x of point 2
+//y2:10;//y of point 2
+//z2:10;//z Of point 2
+//ect.
+
+//There should be three blocks for gps
+//The first block should be called GPS Center and it shall be in the center of the ship
+//The second block should be called GPS Left and it should be at the left side of the GPS center block
+//The third block should be called GPS Top and it should be at the top side of the GPS Center block
+
+//There should be a group called guns which are the guns the drone will fire when the ships detects something
 String Gyros = "Gyros"; 
 String Guns = "Guns"; 
 String Forward = "ForwardThrusters";
