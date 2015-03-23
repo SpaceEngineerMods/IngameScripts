@@ -1,0 +1,969 @@
+//--------------------------------    
+	string ShipName="Hrv4";    
+	int Clock=60;     
+	float SimSpeed=1f;    
+	float GyroMult=1f;    
+	float ThrustMult=1f;    
+	float BrakingDist=500;    
+	int BrakeDelay=10;	  
+	float DockGyroPower= 0.5f;   
+	float MaxCargo=-1;   
+	int MaxShafts=100;  
+//--------------------------------    
+	IMyTextPanel keyBlock;       
+	System.DateTime lastTime; 	    
+	int TickCount;     
+	    
+	void Main(){    
+	TickCount++;   
+	if ((TickCount % Clock)==0)     
+	{     
+	Navigate();    
+	}     
+	else{    
+	var Timer = GridTerminalSystem.GetBlockWithName(ShipName+"TimerClock") as IMyTimerBlock;     
+	Timer.GetActionWithName("TriggerNow").Apply(Timer);    
+	}    
+	}	    
+	    
+	 void Navigate(){         
+		double yaw_angle=0;        
+		double pitch_angle=0;        
+		double roll_angle=0, nRollAng=0, MaxGyro=0;        
+		double TgDiff=0, CurSpeed, CurX, CurY, CurZ, PrevX, PrevY, PrevZ, CurDiff, PrevDiff, tgY;	        
+		double TargetX = 0, TargetY = 0, TargetZ = 0;       
+		double aBaseX = 0, aBaseY = -7.5, aBaseZ = 0; 	//aBaseY = -4,      
+		double Point=0;      
+		double MaxSpeed=0,MaxYaw=0,MaxPitch=0,MaxRoll=0,YDiff=0,PDiff=0,RDiff=0,MaxAng=0;      
+		string Output="", Status="Complete";        
+		Single MaxThrust=0, FThrust=0, BThrust=0, UThrust=0, DThrust=0, RThrust=0, LThrust=0;      
+		Single HorThrust=0,VertThrust=0;      
+		double Yaw, Pitch, Roll;       
+		bool BBB, fff;      
+		bool AsteroidAhead;      
+		double X0=0, Y0=0, Z0=0, Mr00=0, Mr01=0, Mr02=0, Mr10=0, Mr11=0, Mr12=0, Mr20=0, Mr21=0, Mr22=0;	      
+		int ShaftN=0;       
+		double CargoLoad;      
+		double DrillSideStep=5;     
+		double DelaySec=1;  
+		int Pause=0;	  
+		int ShaftsPerRun=2; 	 
+		int FeAmmount=0, CbAmmount=0,	NiAmmount=0, MgAmmount=0, AuAmmount=0, AgAmmount=0,	PtAmmount=0, SiAmmount=0, UAmmount=0, StoneAmmount=0; 
+ 
+ 		FindKeyBlock();	   
+		 
+ 		Pause = Convert.ToInt32(GetKey("Pause"));   
+		if (Pause==1){  
+			setGyroGroupLevel(ShipName+"NavGyros", "Yaw", 0);    
+			setGyroGroupLevel(ShipName+"NavGyros", "Pitch", 0);    
+			setGyroGroupLevel(ShipName+"NavGyros", "Roll", 0);    
+			setGyroOverride(ShipName+"NavGyros",false);    
+			setThrustGroupLevel(ShipName+"Thrust", 0);    
+			TurnGroup(ShipName+"Brakes", "On");    
+			TurnGroup(ShipName+"Drill", "Off");	    
+			StoreValue(ShipName+": ","Paused");		 
+			TPOnOff(ShipName+"TPIcon","Off");	 
+			return;  
+		}  
+		 
+ 
+	 
+		System.DateTime nowTime = System.DateTime.Now;      
+		System.TimeSpan diffTime = nowTime - lastTime;      
+		lastTime = nowTime;	    
+		DelaySec =(diffTime.Seconds*1000 + diffTime.Milliseconds)/1000f;      
+      
+		Status = GetKey("Status");        
+		ShaftN = Convert.ToInt32(GetKey("ShaftN"));       
+		PrevX = Convert.ToDouble(GetKey("PrevX"));        
+		PrevY = Convert.ToDouble(GetKey("PrevY"));        
+		PrevZ = Convert.ToDouble(GetKey("PrevZ"));        
+		PrevDiff = Convert.ToDouble(GetKey("PrevDiff"));  
+		  
+      
+		CargoLoad=CheckInventory(ShipName+"Cargo", out FeAmmount, out CbAmmount,	out NiAmmount, out MgAmmount, out AuAmmount, out AgAmmount,	out PtAmmount, out SiAmmount, out UAmmount, out StoneAmmount);      
+		tgY=100-(((ShaftN+1) % 2)*1000);      
+		if ((Status=="Drill")||(Status=="DrillAlign")||(Status=="ToAsteroid")||(Status=="FromAsteroid")){      
+			TargetX = Convert.ToInt32(GetKey("ShaftX"));      
+			TargetZ = Convert.ToInt32(GetKey("ShaftZ"));			      
+			if (Status=="DrillAlign")      
+			{TargetY = tgY;}      
+			if (Status=="Drill")      
+			{      
+			if (((ShaftN) % 2)==0){TargetY=PrevY-20;}      
+			else{TargetY=PrevY+20;}      
+			}      
+			if (Status=="ToAsteroid")      
+			{TargetY = 300;}		      
+			if (Status=="FromAsteroid"){TargetY = 500;}      
+			      
+      
+		X0=Convert.ToDouble(GetKey("X0"));      
+		Y0=Convert.ToDouble(GetKey("Y0"));      
+		Z0=Convert.ToDouble(GetKey("Z0"));      
+		Mr00=Convert.ToDouble(GetKey("Mr00"));      
+		Mr01=Convert.ToDouble(GetKey("Mr01"));      
+		Mr02=Convert.ToDouble(GetKey("Mr02"));	      
+		Mr10=Convert.ToDouble(GetKey("Mr10"));      
+		Mr11=Convert.ToDouble(GetKey("Mr11"));      
+		Mr12=Convert.ToDouble(GetKey("Mr12"));	      
+		Mr20=Convert.ToDouble(GetKey("Mr20"));      
+		Mr21=Convert.ToDouble(GetKey("Mr21"));      
+		Mr22=Convert.ToDouble(GetKey("Mr22"));		      
+	}	      
+      
+	if (Status=="ToBase"){      
+		//Mr00=1;      
+		//Mr11=1;      
+		//Mr22=1;	      
+		TargetX = aBaseX;      
+		TargetY = aBaseY+800;       
+		TargetZ = aBaseZ;	      
+		X0=Convert.ToDouble(GetKey("conX0"));      
+		Y0=Convert.ToDouble(GetKey("conY0"));      
+		Z0=Convert.ToDouble(GetKey("conZ0"));      
+		Mr00=Convert.ToDouble(GetKey("conMr00"));      
+		Mr01=Convert.ToDouble(GetKey("conMr01"));      
+		Mr02=Convert.ToDouble(GetKey("conMr02"));	      
+		Mr10=Convert.ToDouble(GetKey("conMr10"));      
+		Mr11=Convert.ToDouble(GetKey("conMr11"));      
+		Mr12=Convert.ToDouble(GetKey("conMr12"));	      
+		Mr20=Convert.ToDouble(GetKey("conMr20"));      
+		Mr21=Convert.ToDouble(GetKey("conMr21"));      
+		Mr22=Convert.ToDouble(GetKey("conMr22"));		      
+		      
+	}      
+	if ((Status=="Dock")||(Status=="Undock")){      
+      
+		X0=Convert.ToDouble(GetKey("conX0"));      
+		Y0=Convert.ToDouble(GetKey("conY0"));      
+		Z0=Convert.ToDouble(GetKey("conZ0"));      
+		Mr00=Convert.ToDouble(GetKey("conMr00"));      
+		Mr01=Convert.ToDouble(GetKey("conMr01"));      
+		Mr02=Convert.ToDouble(GetKey("conMr02"));	      
+		Mr10=Convert.ToDouble(GetKey("conMr10"));      
+		Mr11=Convert.ToDouble(GetKey("conMr11"));      
+		Mr12=Convert.ToDouble(GetKey("conMr12"));	      
+		Mr20=Convert.ToDouble(GetKey("conMr20"));      
+		Mr21=Convert.ToDouble(GetKey("conMr21"));      
+		Mr22=Convert.ToDouble(GetKey("conMr22"));		      
+	      
+		Point=0; 	      
+		TargetX = aBaseX;       
+		TargetY = aBaseY;       
+		TargetZ = aBaseZ;		      
+	}      
+		GetCoordsDrill(TargetX, TargetY, TargetZ, X0,Y0,Z0, Mr00, Mr01, Mr02, Mr10, Mr11, Mr12, Mr20, Mr21, Mr22, out yaw_angle, out pitch_angle, out roll_angle, out TgDiff, out CurX, out CurY, out CurZ);      
+      
+		double VecX = CurX - PrevX;                  
+		double VecY = CurY - PrevY;                  
+		double VecZ = CurZ - PrevZ;                  
+			         
+		CurDiff = Math.Sqrt(VecX * VecX + VecY * VecY + VecZ * VecZ);        
+		CurSpeed =	(CurDiff/DelaySec)/SimSpeed;       
+		       
+		UpdateKey("PrevX", ""+CurX);       
+		UpdateKey("PrevY", ""+CurY);       
+		UpdateKey("PrevZ", ""+CurZ);       
+		UpdateKey("PrevDiff", ""+TgDiff);       
+	//	UpdateKey("Speed", ""+CurSpeed);      
+      
+		if((Math.Abs(roll_angle)>0) || (Math.Abs(pitch_angle)>0) || (Math.Abs(yaw_angle)>0))      
+		{      
+      
+		if (Status=="Drill"){nRollAng=10;MaxGyro=0.03;} else{nRollAng=180;MaxGyro=0.1*GyroMult;}      
+      
+		Roll=Math.Round(roll_angle/50,4)*GyroMult;      
+		if (Roll>MaxGyro){Roll=MaxGyro;}      
+		if (Roll<-MaxGyro){Roll=-MaxGyro;}	      
+		      
+		if ((roll_angle>-nRollAng) && (roll_angle<nRollAng)){      
+			Yaw=Math.Round(yaw_angle/50,4)*GyroMult;       
+			Pitch=Math.Round(pitch_angle/50,4)*GyroMult;            
+			if (Yaw>MaxGyro){Yaw=MaxGyro;}      
+			if (Yaw<-MaxGyro){Yaw=-MaxGyro;}      
+			if (Pitch>MaxGyro){Pitch=MaxGyro;}      
+			if (Pitch<-MaxGyro){Pitch=-MaxGyro;}      
+			}      
+		else{      
+			Yaw=0;      
+			Pitch=0;      
+		}      
+		}      
+	else{      
+		Yaw=0;      
+		Pitch=0;      
+		Roll=0;      
+		}      
+		      
+		if ((Status=="ToBase")||(Status=="ToAsteroid")){      
+			if (TgDiff>BrakingDist){      
+				BBB=(Math.Abs(yaw_angle)<5) && (Math.Abs(pitch_angle)<5) && (Math.Abs(roll_angle)<5);      
+				if (BBB)      
+				FThrust=45000;      
+				setThrustGroupLevel(ShipName+"ThrustF", FThrust);      
+				setGyroGroupLevel(ShipName+"NavGyros", "Yaw", Yaw);	      
+				setGyroGroupLevel(ShipName+"NavGyros", "Pitch", Pitch);      
+				setGyroGroupLevel(ShipName+"NavGyros", "Roll", Roll);      
+				Delay(ShipName+"TimerClock");       
+				}      
+			else{      
+				FThrust=0;      
+				setThrustGroupLevel(ShipName+"ThrustF", FThrust);      
+				UnlockConnector(ShipName+"Connector");      
+				if (Status=="ToBase"){UpdateKey("Status", "Dock");}      
+				if (Status=="ToAsteroid"){UpdateKey("Status", "DrillAlign");}      
+				TurnGroup(ShipName+"Brakes", "On");      
+				Delay(ShipName+"TimerClock", BrakeDelay);			      
+				}      
+			}      
+		      
+		if (Status=="Undock"){      
+			setGyroGroupLevel(ShipName+"NavGyros", "Yaw", 0);      
+			setGyroGroupLevel(ShipName+"NavGyros", "Pitch", 0);      
+			setGyroGroupLevel(ShipName+"NavGyros", "Roll", 0);      
+			setThrustGroupLevel(ShipName+"ThrustF", 25000);	      
+				if (CurY>50){      
+				setThrustGroupLevel(ShipName+"Thrust", 0);	      
+				UpdateKey("Status", "ToAsteroid");      
+				}      
+			Delay(ShipName+"TimerClock"); 	      
+		}	      
+		      
+		if (Status=="FromAsteroid"){      
+			TurnGroup(ShipName+"Drill", "Off");			      
+			setGyroGroupLevel(ShipName+"NavGyros", "Yaw", 0);      
+			setGyroGroupLevel(ShipName+"NavGyros", "Pitch", 0);      
+			setGyroGroupLevel(ShipName+"NavGyros", "Roll", 0);	      
+			setThrustGroupLevel(ShipName+"ThrustF", 45000);	      
+				if (CurY>200){      
+				setThrustGroupLevel(ShipName+"Thrust", 0);	      
+				UpdateKey("Status", "ToBase");      
+				}      
+			Delay(ShipName+"TimerClock"); 	      
+		}	      
+      
+		if (Status=="DrillAlign"){      
+		TurnGroup(ShipName+"Drill", "Off");      
+		TurnGroup(ShipName+"Brakes", "Off");		      
+		setGyroGroupLevel(ShipName+"NavGyros", "Yaw", Yaw);      
+		setGyroGroupLevel(ShipName+"NavGyros", "Pitch", Pitch);      
+		setGyroGroupLevel(ShipName+"NavGyros", "Roll", Roll);      
+		MaxSpeed=0.2*ThrustMult;MaxThrust=7500;MaxYaw=5;MaxPitch=5;MaxRoll=5; MaxAng=0.001;      
+		double HorD = Math.Abs((CurX-TargetX)/TgDiff);      
+		double VerD = Math.Abs((CurZ-TargetZ)/TgDiff);	      
+	//	if ((HorD>0.01)||(VerD>0.01)){MaxSpeed=1;}      
+		if ((HorD>0.005)||(VerD>0.01)){MaxSpeed=1;}      
+		if ((HorD>0.01)||(VerD>0.01)){MaxSpeed=2;}      
+		if ((HorD>0.03)||(VerD>0.03)){MaxSpeed=5;}      
+		if ((HorD>0.1)||(VerD>0.1)){MaxSpeed=25;}      
+		if ((HorD>0.2)||(VerD>0.2)){MaxSpeed=50;}      
+		      
+		BBB=(Math.Abs(yaw_angle)<MaxYaw) && (Math.Abs(pitch_angle)<MaxPitch) && (Math.Abs(roll_angle)<MaxRoll)&& (CurSpeed<MaxSpeed);      
+			if (BBB){      
+				//setThrustGroupLevel(ShipName+"Thrust", 0);      
+				if (HorD>MaxAng){      
+				HorThrust=MaxThrust+Convert.ToInt32(Math.Round(HorD*10000,0))*ThrustMult;      
+				if (HorThrust<1700){HorThrust=1700;}      
+				FThrust=0;      
+				}      
+				else{      
+				HorThrust=0;      
+				FThrust=MaxThrust;      
+				}      
+					if((ShaftN % 2)==0){      
+						if (CurX>TargetX){setThrustGroupLevel(ShipName+"ThrustR", HorThrust);}      
+						if (CurX<TargetX){setThrustGroupLevel(ShipName+"ThrustL", HorThrust);}      
+						}      
+					else      
+						{      
+						if (CurX<TargetX){setThrustGroupLevel(ShipName+"ThrustR", HorThrust);}      
+						if (CurX>TargetX){setThrustGroupLevel(ShipName+"ThrustL", HorThrust);}					      
+						}      
+				if (VerD>MaxAng){      
+				VertThrust=MaxThrust+Convert.ToInt32(Math.Round(VerD*10000,0))*ThrustMult;      
+				if (VertThrust<1700){VertThrust=1700;}      
+				FThrust=0;      
+				}      
+				else{      
+				VertThrust=0;      
+				FThrust=MaxThrust;      
+				}			      
+					if (CurZ>TargetZ){setThrustGroupLevel(ShipName+"ThrustD", VertThrust);}      
+					if (CurZ<TargetZ){setThrustGroupLevel(ShipName+"ThrustU", VertThrust);}      
+					}      
+			else      
+			{      
+			setThrustGroupLevel(ShipName+"Thrust", 0);      
+			}					      
+					      
+				if ((HorD<MaxAng)&&(VerD<MaxAng)){      
+				AsteroidAhead=getSensorStatus(ShipName+"Sensor");      
+				if (AsteroidAhead){      
+					setThrustGroupLevel(ShipName+"Thrust", 0);				      
+					TurnGroup(ShipName+"Brakes", "Off");	      
+					UpdateKey("Status", "Drill");      
+					TurnGroup(ShipName+"Ejector", "On");      
+					setGyroGroupLevel(ShipName+"NavGyros", "Yaw", 0);      
+					setGyroGroupLevel(ShipName+"NavGyros", "Pitch", 0);      
+					setGyroGroupLevel(ShipName+"NavGyros", "Roll", 0);	      
+					}      
+				else      
+					{      
+					if (TgDiff>0){MaxSpeed=10;FThrust=30000;}else{MaxSpeed=5;FThrust=7500;}      
+					if (CurSpeed<MaxSpeed){setThrustGroupLevel(ShipName+"ThrustF", FThrust);}      
+					else {setThrustGroupLevel(ShipName+"ThrustF", 0);}      
+					}      
+				Delay(ShipName+"TimerClock");      
+				}      
+			Delay(ShipName+"TimerClock");      
+		}      
+      
+		if (Status=="Start"){      
+		UnlockConnector(ShipName+"Connector");		      
+		setGyroOverride(ShipName+"NavGyros",true);	      
+		UpdateKey("Status", "DrillAlign");      
+		Delay(ShipName+"TimerClock");	      
+		SitRep(ShipName+": ", "On");      
+		}      
+		      
+		if (Status=="Drill"){      
+		AsteroidAhead=getSensorStatus(ShipName+"Sensor");      
+		double GyroAdd=0;      
+		      
+		setThrustGroupLevel(ShipName+"ThrustB", 0);	      
+		TurnGroup(ShipName+"Drill", "On");	      
+		MaxSpeed=3; MaxThrust=5000; MaxYaw=3; MaxPitch=3; MaxRoll=3;      
+		if (CurY>0){MaxSpeed=10;}      
+		if (CurY>50){MaxSpeed=25;}      
+		      
+		if (AsteroidAhead){      
+		MaxSpeed=2;      
+		}      
+		BBB=(Math.Abs(yaw_angle)<MaxYaw) && (Math.Abs(pitch_angle)<MaxPitch) && (Math.Abs(roll_angle)<MaxRoll);      
+		FThrust=MaxThrust;      
+		      
+		if ((BBB) && (CurSpeed<MaxSpeed)){      
+		setThrustGroupLevel(ShipName+"ThrustF", FThrust);      
+		if ((CurSpeed<0.2)&&(AsteroidAhead)){setThrustGroupLevel(ShipName+"ThrustF", FThrust+20000);}      
+		}      
+		else      
+			{      
+			if (!(CurSpeed<MaxSpeed)){setThrustGroupLevel(ShipName+"Thrust", 0);}      
+			else {      
+			if (AsteroidAhead) {setThrustGroupLevel(ShipName+"ThrustF", FThrust+12000);}      
+			}			      
+			}	      
+			      
+		if (!AsteroidAhead){      
+		ShaftN++;      
+		UpdateKey("ShaftN", ""+ShaftN);      
+		int ShaftX=0,ShaftZ=0;      
+		GetSpiralXY(ShaftN, 20, out ShaftX, out ShaftZ);      
+		TargetX=ShaftX*DrillSideStep;      
+		TargetZ=ShaftZ*DrillSideStep;      
+		      
+		UpdateKey("ShaftX", ""+TargetX);		      
+		UpdateKey("ShaftZ", ""+TargetZ);		      
+		      
+		if (((ShaftN % ShaftsPerRun)==0)&& (CargoLoad>MaxCargo))      
+		{					      
+		UpdateKey("Status", "FromAsteroid");      
+		TurnGroup(ShipName+"Ejector", "Off");      
+		}      
+		else{      
+		setThrustGroupLevel(ShipName+"Thrust", 0);      
+		Yaw=8;      
+		UpdateKey("Status", "DrillAlign");      
+		}      
+		}      
+		setGyroGroupLevel(ShipName+"NavGyros", "Yaw", Yaw);      
+		setGyroGroupLevel(ShipName+"NavGyros", "Pitch", Pitch);      
+		setGyroGroupLevel(ShipName+"NavGyros", "Roll", Roll);      
+		Delay(ShipName+"TimerClock");	      
+		}	      
+      
+		if (Status=="Docked"){   
+			setThrustGroupLevel(ShipName+"Thrust", 0);      
+			setGyroGroupLevel(ShipName+"NavGyros", "Yaw", 0);      
+			setGyroGroupLevel(ShipName+"NavGyros", "Pitch", 0);      
+			setGyroGroupLevel(ShipName+"NavGyros", "Roll", 0);	     		 
+			LoadCargo("FromShip");      
+		if(CargoLoad<10){      
+		if (ShaftN<MaxShafts)      
+			{      
+			UpdateKey("Status", "Undock");      
+			setThrustGroupLevel(ShipName+"ThrustF", 20000);   
+			UnlockConnector(ShipName+"Connector");      
+			}      
+		else{      
+			UnlockConnector(ShipName+"Connector"); 		  
+			setGyroGroupLevel(ShipName+"NavGyros", "Yaw", 0);      
+			setGyroGroupLevel(ShipName+"NavGyros", "Pitch", 0);      
+			setGyroGroupLevel(ShipName+"NavGyros", "Roll", 0);      
+			setThrustGroupLevel(ShipName+"Thrust", 0);      
+			UpdateKey("Status", "Complete");      
+			}      
+  		}	      
+			Delay(ShipName+"TimerClock", 5);       
+		}		      
+		      
+		if	(Status=="Dock"){      
+			TurnGroup(ShipName+"Brakes", "Off");      
+			//if(TgDiff>2000)	{UpdateKey("Status", "Travel");}      
+			if (TgDiff>0)	{MaxSpeed=0.5;MaxThrust=3000;MaxYaw=1;MaxPitch=1;MaxRoll=1; MaxAng=0.02;}      
+			if (TgDiff>25)	{MaxSpeed=1;MaxThrust=3000;MaxYaw=0.5;MaxPitch=0.5;MaxRoll=0.5;MaxAng=0.02;}	      
+			if (TgDiff>35)	{MaxSpeed=2;MaxThrust=3000;MaxYaw=0.8;MaxPitch=0.8;MaxRoll=0.8;MaxAng=0.02;}	      
+			if (TgDiff>50)	{MaxSpeed=5;MaxThrust=5000;MaxYaw=2;MaxPitch=2;MaxRoll=1;MaxAng=0.5;}	      
+			if (TgDiff>100)	{MaxSpeed=10;MaxThrust=12000;MaxYaw=5;MaxPitch=5;MaxRoll=2;MaxAng=0.1;}	      
+			if (TgDiff>200)	{MaxSpeed=15;MaxThrust=15000;MaxYaw=7;MaxPitch=7;MaxRoll=3;MaxAng=0.15;}	      
+			if (TgDiff>300)	{MaxSpeed=20;MaxThrust=15000;MaxYaw=10;MaxPitch=10;MaxRoll=5;MaxAng=0.20;}	      
+			if (TgDiff>500)	{MaxSpeed=25;MaxThrust=20000;MaxYaw=15;MaxPitch=15;MaxRoll=10;MaxAng=0.25;}      
+			if (TgDiff<0)	{MaxSpeed=0;MaxThrust=0;MaxYaw=1;MaxPitch=1;MaxRoll=1; MaxAng=0.05;}		      
+      
+			BBB=(Math.Abs(yaw_angle)<MaxYaw) && (Math.Abs(pitch_angle)<MaxPitch) && (Math.Abs(roll_angle)<MaxRoll) && (CurSpeed<MaxSpeed);      
+			if (BBB){      
+				double HorD = Math.Abs((CurX-TargetX)/TgDiff);      
+				if (HorD>MaxAng){      
+				HorThrust=MaxThrust+Convert.ToSingle(Math.Round(HorD*10000,0))*ThrustMult;      
+				if (HorThrust<1700){HorThrust=1700;}      
+				FThrust=0;      
+				}      
+				else      
+				{      
+				HorThrust=0;      
+				FThrust=MaxThrust;      
+				}      
+				if (CurX>TargetX){setThrustGroupLevel(ShipName+"ThrustL", HorThrust);}      
+				if (CurX<TargetX){setThrustGroupLevel(ShipName+"ThrustR", HorThrust);}      
+				double VerD = Math.Abs((CurZ-TargetZ)/TgDiff);      
+				if (VerD>MaxAng){      
+				VertThrust=MaxThrust+Convert.ToInt32(Math.Round(HorD*10000,0))*ThrustMult;      
+				if (VertThrust<1700){VertThrust=1700;}				      
+				FThrust=0;      
+				}      
+				else      
+				{      
+				VertThrust=0;      
+				FThrust=MaxThrust;      
+				}			      
+				if (CurZ>TargetZ){setThrustGroupLevel(ShipName+"ThrustD", VertThrust);}      
+				if (CurZ<TargetZ){setThrustGroupLevel(ShipName+"ThrustU", VertThrust);}      
+				setThrustGroupLevel(ShipName+"ThrustB", FThrust);      
+			}			      
+			else      
+			{      
+				setThrustGroupLevel(ShipName+"Thrust", 0);      
+			}      
+				if (TgDiff>20){      
+					setGyroGroupLevel(ShipName+"NavGyros", "Yaw", -Yaw);      
+					setGyroGroupLevel(ShipName+"NavGyros", "Pitch", -Pitch);      
+					setGyroGroupLevel(ShipName+"NavGyros", "Roll", Roll);    
+					Delay(ShipName+"TimerClock");      
+				}      
+				else{      
+						Delay(ShipName+"TimerClock");      
+						if (LockConnector(ShipName+"Connector")){    
+						Status="JustDocked"; 
+						UpdateKey("Status", "Docked");    
+						}      
+						else      
+						{    
+						setGyroGroupLevel(ShipName+"NavGyros", "Yaw", -Yaw, DockGyroPower);      
+						setGyroGroupLevel(ShipName+"NavGyros", "Pitch", -Pitch, DockGyroPower);      
+						setGyroGroupLevel(ShipName+"NavGyros", "Roll", Roll, DockGyroPower);						    
+						}      
+		}    
+      } 
+	  if (Status!="JustDocked"){ 
+		Output="Status: "+Status+" | ShaftN: "+ShaftN+" | Angles: "+Math.Round(yaw_angle,1)+"|"+Math.Round(pitch_angle,1)+"|"+Math.Round(roll_angle,1) + " | Location: "+Math.Round(CurX,1)+"|"+Math.Round(CurY,1)+"|"+Math.Round(CurZ,1)+ "  | Distance: "+Math.Round(TgDiff,1)+ " | Delay: "+ Math.Round(DelaySec,3) + " | Speed: "+Math.Round(CurSpeed,1) + " | Cargo: " + Math.Round(CargoLoad,1);      
+		StoreValue(ShipName+": ", Output);   
+		 
+		TPOnOff(ShipName+"TPIcon","On");	 
+					 
+		Output= " STATUS:\n";		 
+		Output+=" "+Status+"\n"; 
+		Output+=" Shaft N: "+ ShaftN+"\n"; 
+		Output+=" X: "+ Math.Round(CurX,1)+"\n"; 
+		Output+=" Z: "+ Math.Round(CurZ,1)+"\n"; 
+		Output+=" Y: "+ Math.Round(CurY,1)+"\n"; 
+		TextOutput(ShipName+"TPStatus", Output);		 
+		 
+		Output= "CARGO: "+Math.Round(CargoLoad,1)+"%"; 
+		if (FeAmmount>0){Output+="\n Fe: "+FeAmmount;} 
+		if (CbAmmount>0){Output+="\n Cb: "+CbAmmount;} 
+		if (NiAmmount>0){Output+="\n Ni: "+NiAmmount;} 
+		if (MgAmmount>0){Output+="\n Mg: "+MgAmmount;} 
+		if (AuAmmount>0){Output+="\n Au: "+AuAmmount;} 
+		if (AgAmmount>0){Output+="\n Ag: "+AgAmmount;} 
+		if (PtAmmount>0){Output+="\n Pt: "+PtAmmount;} 
+		if (SiAmmount>0){Output+="\n Si: "+SiAmmount;} 
+		if (UAmmount>0){Output+="\n U: "+UAmmount;} 
+		if (StoneAmmount>0){Output+="\n Stone: "+StoneAmmount;}		 
+		TextOutput(ShipName+"TPCargo", Output); 
+		TextOutput(ShipName+"TPData", ""); 
+		} 
+	}         
+	  
+		  
+void TextOutput(string Screen, string Output="") 
+{ 
+	IMyTextPanel ScreenObj = GridTerminalSystem.GetBlockWithName(Screen) as IMyTextPanel; 
+	if (ScreenObj!=null){ 
+		ScreenObj.ShowTextureOnScreen(); 
+		if (Output!=""){ 
+			ScreenObj.WritePublicText(Output); 
+		} 
+		ScreenObj.ShowPublicTextOnScreen(); 
+		//ScreenObj.GetActionWithName("OnOff_Off").Apply(ScreenObj); 
+		ScreenObj.GetActionWithName("OnOff_On").Apply(ScreenObj); 
+	} 
+}	 
+ 
+void SetTPIcon(string Screen, string Output="") 
+{ 
+	IMyTextPanel ScreenObj = GridTerminalSystem.GetBlockWithName(Screen) as IMyTextPanel; 
+	if (ScreenObj!=null){ 
+		if (Output!=""){ 
+			ScreenObj.AddImageToSelection("-1"); 
+			ScreenObj.AddImageToSelection(Output); 
+		} 
+		ScreenObj.GetActionWithName("OnOff_On").Apply(ScreenObj); 
+	} 
+} 
+ 
+void TPOnOff(string Screen, string OnOff="Off") 
+{ 
+	IMyTextPanel ScreenObj = GridTerminalSystem.GetBlockWithName(Screen) as IMyTextPanel; 
+	if (ScreenObj!=null){ 
+		ScreenObj.GetActionWithName("OnOff_"+OnOff).Apply(ScreenObj); 
+	} 
+}	  
+		  
+void GetSpiralXY(int p, int n, out int X, out int Y)       
+{       
+int positionX = 0, positionY = 0, direction = 0, stepsCount = 1, stepPosition = 0, stepChange = 0;       
+X=0;      
+Y=0;       
+        for (int i = 0; i < n * n; i++)       
+        {       
+			if (i==p){       
+			X=positionX;       
+			Y=positionY;      
+			return;		      
+			}       
+            if (stepPosition < stepsCount)       
+            {       
+                stepPosition++;       
+            }       
+            else       
+            {       
+                stepPosition = 1;       
+                if (stepChange == 1)       
+                {       
+                    stepsCount++;       
+                }       
+                stepChange = (stepChange + 1) % 2;       
+                direction = (direction + 1) % 4;       
+            }       
+				if (direction==0){positionY++;}       
+                else if (direction==1){positionX--;}      
+				else if (direction==2){positionY--;}       
+                else if (direction==3){positionX++;}       
+        }       
+	}      
+	      
+	void SitRep(string t, string OnOff)       
+	{      
+		List<IMyTerminalBlock> Beacons = new List<IMyTerminalBlock>();      
+		GridTerminalSystem.SearchBlocksOfName(t, Beacons);                 
+		IMyBeacon Beacon = Beacons[(0)] as IMyBeacon; 	      
+		Beacon.GetActionWithName("OnOff_"+OnOff).Apply(Beacon);      
+	}	      
+	      
+	double CheckInventory(string Group, out int FeAmmount, out int CbAmmount, out int NiAmmount, out int MgAmmount, out int AuAmmount, out int AgAmmount, out int PtAmmount, out int SiAmmount, out int UAmmount, out int StoneAmmount)      
+	{      
+	List<IMyTerminalBlock> blocks=GetBlocksFromGroup(Group);      
+	FeAmmount=0; 
+	CbAmmount=0; 
+	NiAmmount=0; 
+	MgAmmount=0; 
+	AuAmmount=0; 
+	AgAmmount=0; 
+	PtAmmount=0; 
+	SiAmmount=0; 
+	UAmmount=0; 
+	StoneAmmount=0; 
+	if (blocks.Count > 0)       
+			{       
+			double currentCargo=0;      
+			double maxCargo=0;      
+				for (int x = 0; x < blocks.Count; x++)       
+				{       
+					var crate = blocks[x];       
+					var inventory = (IMyInventoryOwner)crate;         
+					VRage.MyFixedPoint current = inventory.GetInventory(0).CurrentVolume;       
+					currentCargo += (float)current;       
+					VRage.MyFixedPoint max = inventory.GetInventory(0).MaxVolume;       
+					maxCargo += (float)max;    
+ 
+					var crateItems = inventory.GetInventory(0).GetItems(); 
+		 
+					for (int j = crateItems.Count -1; j >= 0; j--) 
+					{ 
+						if (crateItems[j].Content.SubtypeName == "Iron") 
+						{FeAmmount+=(int)crateItems[j].Amount;} 
+						else if (crateItems[j].Content.SubtypeName == "Cobalt") 
+						{CbAmmount+=(int)crateItems[j].Amount;}						 
+						else if (crateItems[j].Content.SubtypeName == "Nickel") 
+						{NiAmmount+=(int)crateItems[j].Amount;} 
+						else if (crateItems[j].Content.SubtypeName == "Magnesium") 
+						{MgAmmount+=(int)crateItems[j].Amount;} 
+						else if (crateItems[j].Content.SubtypeName == "Gold") 
+						{AuAmmount+=(int)crateItems[j].Amount;} 
+						else if (crateItems[j].Content.SubtypeName == "Silver") 
+						{AgAmmount+=(int)crateItems[j].Amount;} 
+						else if (crateItems[j].Content.SubtypeName == "Platinum") 
+						{PtAmmount+=(int)crateItems[j].Amount;} 
+						else if (crateItems[j].Content.SubtypeName == "Silicon") 
+						{SiAmmount+=(int)crateItems[j].Amount;} 
+						else if (crateItems[j].Content.SubtypeName == "Uranium") 
+						{UAmmount+=(int)crateItems[j].Amount;} 
+						else if (crateItems[j].Content.SubtypeName == "Stone") 
+						{StoneAmmount+=(int)crateItems[j].Amount;} 
+					} 
+				}       
+				return 100*currentCargo/maxCargo;      
+			 }      
+			 else{return 0;}      
+	}        
+      
+      
+	void GetCoordsDrill(double TargetX, double TargetY, double TargetZ, double X0, double Y0, double Z0, double Mr00,double Mr01,double Mr02,double Mr10,double Mr11,double Mr12,double Mr20,double Mr21,double Mr22, out double yaw_angle, out double pitch_angle, out double roll_angle, out double TgDiff, out double CenterX1, out double CenterY1, out double CenterZ1)         
+	{             
+	yaw_angle=0;        
+	pitch_angle=0;        
+	roll_angle=0;        
+	TgDiff=0;        
+	double CenterX=0;       
+	double CenterY=0;       
+	double CenterZ=0;       
+	CenterX1=0;       
+	CenterY1=0;       
+	CenterZ1=0;       
+	         
+		List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();                  
+		double LeftX = 0, LeftY = 0, LeftZ = 0, RightX = 0, RightY = 0, RightZ = 0,            
+		TopX = 0, TopY = 0, TopZ = 0;           
+		      
+				      
+		bool Center_found = false,                  
+		Left_found = false,                  
+		Top_found = false,                  
+		Right_found = false;       
+		      
+		blocks.Clear();                  
+		GridTerminalSystem.SearchBlocksOfName(ShipName+"GPS", blocks);                   
+			       
+		for (int i = 0; i < blocks.Count; i++)                  
+		{                  
+			IMyTerminalBlock block = blocks[i];                  
+			// Find GPS alignment blocks             
+		        
+			if (block.CustomName == ShipName+"GPSLeft")                  
+			{                  
+				LeftX = block.GetPosition().GetDim(0);                  
+				LeftY = block.GetPosition().GetDim(1);                  
+				LeftZ = block.GetPosition().GetDim(2);                  
+				Left_found = true;                  
+			}                  
+			else if (block.CustomName == ShipName+"GPSTop")                  
+			{                  
+				TopX = block.GetPosition().GetDim(0);                  
+				TopY = block.GetPosition().GetDim(1);                  
+				TopZ = block.GetPosition().GetDim(2);                  
+				Top_found = true;                  
+			}               
+			else if (block.CustomName == ShipName+"GPSRight")                  
+			{                  
+				RightX = block.GetPosition().GetDim(0);                  
+				RightY = block.GetPosition().GetDim(1);                  
+				RightZ = block.GetPosition().GetDim(2);      
+				Right_found = true;	    
+			}               
+		}         
+			CenterX=(LeftX+RightX)/2;    
+			CenterY=(LeftY+RightY)/2;    
+			CenterZ=(LeftZ+RightZ)/2;				    
+			Center_found = true;        
+		    
+		if (Center_found && Left_found && Top_found)                  
+		{                
+			double LeVecX = LeftX - CenterX;                  
+			double LeVecY = LeftY - CenterY;                  
+			double LeVecZ = LeftZ - CenterZ;                  
+			double LeftDiff = Math.Sqrt(LeVecX * LeVecX + LeVecY * LeVecY + LeVecZ * LeVecZ);                  
+				      
+			double ToVecX = TopX - CenterX;                  
+			double ToVecY = TopY - CenterY;                  
+			double ToVecZ = TopZ - CenterZ;                  
+			double TopDiff = Math.Sqrt(ToVecX * ToVecX + ToVecY * ToVecY + ToVecZ * ToVecZ);                  
+      
+			double FoVecX = -1*(LeVecY*ToVecZ - LeVecZ*ToVecY);                  
+			double FoVecY = -1*(LeVecZ*ToVecX - LeVecX*ToVecZ);                  
+			double FoVecZ = -1*(LeVecX*ToVecY - LeVecY*ToVecX);   	               
+			double ForwDiff = Math.Sqrt(FoVecX * FoVecX + FoVecY * FoVecY + FoVecZ * FoVecZ);      
+			double lambda = Math.Sqrt(ForwDiff)/(ForwDiff-Math.Sqrt(ForwDiff));      
+			FoVecX = FoVecX*lambda/(1+lambda);      
+			FoVecY = FoVecY*lambda/(1+lambda);      
+			FoVecZ = FoVecZ*lambda/(1+lambda);      
+			ForwDiff = Math.Sqrt(FoVecX * FoVecX + FoVecY * FoVecY + FoVecZ * FoVecZ);      
+      
+			CenterX=CenterX-X0;      
+			CenterY=CenterY-Y0;      
+			CenterZ=CenterZ-Z0;			      
+      
+			CenterX1 = Mr00*CenterX + Mr01*CenterY + Mr02*CenterZ;                  
+			CenterY1 = Mr10*CenterX + Mr11*CenterY + Mr12*CenterZ;                  
+			CenterZ1 = Mr20*CenterX + Mr21*CenterY + Mr22*CenterZ;  	      
+      
+      
+			double LeVecX1 = Mr00*LeVecX + Mr01*LeVecY + Mr02*LeVecZ;                  
+			double LeVecY1 = Mr10*LeVecX + Mr11*LeVecY + Mr12*LeVecZ;                  
+			double LeVecZ1 = Mr20*LeVecX + Mr21*LeVecY + Mr22*LeVecZ;       
+			      
+			double ToVecX1 = Mr00*ToVecX + Mr01*ToVecY + Mr02*ToVecZ;                  
+			double ToVecY1 = Mr10*ToVecX + Mr11*ToVecY + Mr12*ToVecZ;                  
+			double ToVecZ1 = Mr20*ToVecX + Mr21*ToVecY + Mr22*ToVecZ; 		      
+      
+			double FoVecX1 = Mr00*FoVecX + Mr01*FoVecY + Mr02*FoVecZ;                  
+			double FoVecY1 = Mr10*FoVecX + Mr11*FoVecY + Mr12*FoVecZ;                  
+			double FoVecZ1 = Mr20*FoVecX + Mr21*FoVecY + Mr22*FoVecZ;       
+			      
+      
+			double TgVecX1 = TargetX - CenterX1;                  
+			double TgVecY1 = TargetY - CenterY1;                  
+			double TgVecZ1 = TargetZ - CenterZ1;         
+      
+			      
+			//StoreValue("GPSNav:", " x: " +FoVecX1+" | y: "+FoVecY1+" | z: "+FoVecZ1);      
+			      
+			TgDiff = Math.Sqrt(TgVecX1 * TgVecX1 + TgVecY1 * TgVecY1 + TgVecZ1 * TgVecZ1); 			      
+			yaw_angle = Math.Acos((LeVecX1 * TgVecX1 + LeVecY1 * TgVecY1 + LeVecZ1 * TgVecZ1) / (LeftDiff * TgDiff)) * 180 / Math.PI - 90;                  
+			pitch_angle = -1 * (Math.Acos((ToVecX1 * TgVecX1 + ToVecY1 * TgVecY1 + ToVecZ1 * TgVecZ1) / (TopDiff * TgDiff)) * 180 / Math.PI - 90);        
+			      
+			double cosFi = FoVecZ1*FoVecZ1 / (Math.Sqrt(FoVecZ1*FoVecZ1)*Math.Sqrt(FoVecX1*FoVecX1+FoVecY1*FoVecY1+FoVecZ1*FoVecZ1));              
+			roll_angle = (Math.Acos(ToVecZ1 / (TopDiff * Math.Sin(Math.Acos(cosFi)) )) * 180 / Math.PI);              
+			if (!(Math.Abs(roll_angle)>0)){roll_angle=0;}      
+			if (LeVecZ1>0) {              
+				roll_angle=roll_angle *-1;              
+			}          
+		}          
+	}      
+      
+      
+	bool getSensorStatus(string s)         
+	{         
+	  IMySensorBlock b = GridTerminalSystem.GetBlockWithName(s) as IMySensorBlock;         
+	  b.GetActionWithName("Detect Asteroids").Apply(b);       
+	  if (b.DetectAsteroids==false){b.GetActionWithName("Detect Asteroids").Apply(b);}      
+	  return (b.LastDetectedEntity!=null);         
+	}        
+	       
+	//----------------------------------------          
+      
+	void LoadCargo(string Load="FromShip")      
+	{      
+		var FromContainers = new List<IMyTerminalBlock>();      
+		var ToContainers = new List<IMyTerminalBlock>();      
+		if (Load=="FromShip"){      
+			FromContainers = GetBlocksFromGroup(ShipName+"Cargo");      
+			ToContainers = GetBlocksFromGroup("BaseCargo");      
+			}      
+		if (Load=="ToShip"){      
+			FromContainers = GetBlocksFromGroup("BaseCargo");      
+			ToContainers = GetBlocksFromGroup(ShipName+"Cargo");      
+			}	      
+		for(int ii = 0; ii < ToContainers.Count; ii++)       
+		{      
+		var Destination = (ToContainers[ii] as IMyInventoryOwner).GetInventory(0);      
+      
+		for(int i = 0; i < FromContainers.Count; i++)        
+			{        
+			var containerInvOwner = (IMyInventoryOwner)FromContainers[i];        
+			var containerInv = containerInvOwner.GetInventory(0);       
+			var containerItems = containerInv.GetItems();        
+	        
+			for(int j = 0; j < containerItems.Count; j++)        
+				{        
+			     containerInv.TransferItemTo(Destination, 0, null, true, null);        
+				}        
+			}        
+		}	        
+	}      
+	       
+	bool LockConnector(string t)       
+	{      
+		IMyShipConnector Connector = GridTerminalSystem.GetBlockWithName(t) as IMyShipConnector; 	      
+		Connector.GetActionWithName("OnOff_On").Apply(Connector);      
+		Connector.GetActionWithName("SwitchLock").Apply(Connector);        
+		return Connector.IsLocked;      
+	}      
+	      
+	bool UnlockConnector(string t)       
+	{      
+		IMyShipConnector Connector = GridTerminalSystem.GetBlockWithName(t) as IMyShipConnector; 	   
+		Connector.GetActionWithName("OnOff_Off").Apply(Connector);      
+		return false;      
+	}      
+		      
+	void Delay(string t, int DelaySec=0)       
+	{       
+		IMyTimerBlock Timer = GridTerminalSystem.GetBlockWithName(t) as IMyTimerBlock; 	  
+		if 	(DelaySec ==0){    
+		Timer.GetActionWithName("TriggerNow").Apply(Timer);    
+		}    
+		else{    
+		Timer.SetValue("TriggerDelay", Convert.ToSingle(DelaySec));       
+		Timer.GetActionWithName("Start").Apply(Timer);       
+		}    
+	}       
+	void StopTimer(string t)       
+	{       
+		IMyTimerBlock Timer = GridTerminalSystem.GetBlockWithName(t) as IMyTimerBlock;         
+		Timer.GetActionWithName("Stop").Apply(Timer);       
+	}        
+	       
+	void StoreValue(string t, string Value)   
+	{   
+		List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();    
+		blocks.Clear();           
+		GridTerminalSystem.SearchBlocksOfName(t, blocks);  	   
+		blocks[0].SetCustomName(t+Value);	   
+	}         
+	        
+	string ReadValue(string t)     
+	{     
+		List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();      
+		blocks.Clear();             
+		GridTerminalSystem.SearchBlocksOfName(t, blocks);  	     
+		string Value=blocks[0].CustomName;	     
+		Value=Value.Replace(t, "");     
+		return Value;     
+	}          
+		      
+	List<IMyTerminalBlock>GetBlocksFromGroup(string group)           
+	{var blocks=new List<IMyTerminalBlock>();      
+	GridTerminalSystem.SearchBlocksOfName(group, blocks); 
+	if(blocks!=null)           
+	{return blocks;}           
+	throw new Exception("GetBlocksFromGroup: Group \""+group+"\" not found");}          
+		      
+	void setThrustGroupLevel(string t, Single ThrustLevel)             
+	{            
+		var Thrusts = GetBlocksFromGroup(t);    
+		ThrustLevel = ThrustLevel/Thrusts.Count;    
+		for (int i = 0; i < Thrusts.Count; i++) {          
+			var Thrust = Thrusts[i] as IMyThrust;          
+			Thrust.SetValue("Override",ThrustLevel);          
+		}          
+	}          
+      
+	void TurnGroup(string t, string OnOff)             
+	{            
+		var GrItems = GetBlocksFromGroup(t);          
+		for (int i = 0; i < GrItems.Count; i++) {          
+			var GrItem = GrItems[i] as IMyTerminalBlock;          
+			GrItem.GetActionWithName("OnOff_"+OnOff).Apply(GrItem);          
+		}          
+	}       
+		      
+	void setGyroGroupLevel(string t, string Axis, double GyroLevel, float GyroPower=1)             
+	{            
+		var Gyros = GetBlocksFromGroup(t);          
+		Single GyroLevels = Convert.ToSingle(GyroLevel);      
+		for (int i = 0; i < Gyros.Count; i++) {          
+			var Gyro = Gyros[i] as IMyGyro;        
+			Gyro.SetValue("Power",GyroPower);      
+			if (Axis=="Yaw"){          
+				Gyro.SetValue("Yaw",GyroLevels);          
+			}          
+			else if (Axis=="Pitch"){          
+				Gyro.SetValue("Pitch",GyroLevels);          
+			}          
+			else if (Axis=="Roll"){          
+				Gyro.SetValue("Roll",GyroLevels);          
+			}    		      
+		}          
+	}         
+      
+	void setGyroOverride(string t, bool OnOff)             
+	{            
+		var Gyros = GetBlocksFromGroup(t);          
+		for (int i = 0; i < Gyros.Count; i++) {          
+			var Gyro = Gyros[i] as IMyGyro;          
+			if ((!Gyro.GyroOverride)&&OnOff){          
+				Gyro.GetActionWithName("Override").Apply(Gyro);          
+			}          
+			if (Gyro.GyroOverride&&(!OnOff)){          
+				Gyro.GetActionWithName("Override").Apply(Gyro);          
+			}  			      
+		}          
+	}	      
+	      
+	      
+	bool FindKeyBlock()      
+	{      
+		keyBlock = GridTerminalSystem.GetBlockWithName(ShipName+"TPData") as IMyTextPanel; 
+		if (keyBlock==null){return false;}else{return true;} 
+	}      
+      
+	String RemoveKey(String key)      
+	{      
+		int hask = HasKey(key);      
+		if(hask<0) return "";      
+      
+		String rtnval= GetKey(key);      
+      
+		String format = key+":"+rtnval+";\n";       
+		String cname = keyBlock.GetPublicText();		 
+		String newname = "";      
+		newname = cname.Remove(  cname.IndexOf(key+":"+rtnval) , format.Length );      
+		keyBlock.WritePublicText(newname); 
+		return rtnval;      
+	}      
+      
+	bool AddKey(String key, String value)      
+	{      
+		String format = key+":"+value+";\n";      
+		keyBlock.WritePublicText(format,true); 
+		return true;      
+	}      
+      
+	bool UpdateKey(String key, String value)      
+	{      
+		bool didRemove = (RemoveKey(key) != "");   
+		AddKey(key,value);      
+		return didRemove;      
+	}      
+      
+	String GetKey(String key)      
+	{      
+		int keyIndex = HasKey(key);      
+		if(keyIndex < 0) return "";      
+		var cname=keyBlock.GetPublicText();		 
+		int semi =  cname.IndexOf(";\n",keyIndex);     
+		return cname.Substring(keyIndex+1,semi-(keyIndex+1));     
+	}      
+      
+	int HasKey(String key)      
+	{      
+		if(keyBlock == null) return -2;      
+		var cname=keyBlock.GetPublicText();	     
+		int keyIndex =  cname.IndexOf(";\n"+key+":",0);      
+		if(keyIndex > 0)    
+		{      
+			 return cname.IndexOf(":",keyIndex);       
+		}      
+		return -1;      
+	}

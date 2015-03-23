@@ -1,0 +1,360 @@
+String Gyros = "Gyros"; 
+String Guns = "Guns"; 
+String Forward = "ForwardThrusters";
+double TgDiff =0; 
+ 
+IMySensorBlock LS; 
+IMySensorBlock RS; 
+IMySensorBlock TS1; 
+IMySensorBlock TS2; 
+IMySensorBlock DS; 
+IMySensorBlock RCS; 
+IMySensorBlock LCS; 
+IMySensorBlock TCS; 
+IMySensorBlock DCS;  
+IMySensorBlock CS1; 
+IMySensorBlock CS2; 
+
+IMyTextPanel Data;
+
+bool DetectedTarget;
+
+void Main() 
+{ 
+
+Data = GridTerminalSystem.GetBlockWithName("Data") as IMyTextPanel; 
+
+LS = GridTerminalSystem.GetBlockWithName("LS") as IMySensorBlock;  
+RS = GridTerminalSystem.GetBlockWithName("RS")as IMySensorBlock; 
+TS1 = GridTerminalSystem.GetBlockWithName("TS1") as IMySensorBlock; 
+TS2 = GridTerminalSystem.GetBlockWithName("TS2") as IMySensorBlock; 
+DS = GridTerminalSystem.GetBlockWithName("DS")as IMySensorBlock; 
+RCS = GridTerminalSystem.GetBlockWithName("RCS")as IMySensorBlock; 
+LCS = GridTerminalSystem.GetBlockWithName("LCS") as IMySensorBlock; 
+TCS = GridTerminalSystem.GetBlockWithName("TCS")as IMySensorBlock; 
+DCS = GridTerminalSystem.GetBlockWithName("DCS") as IMySensorBlock; 
+CS1 = GridTerminalSystem.GetBlockWithName("CS1")as IMySensorBlock; 
+CS2 = GridTerminalSystem.GetBlockWithName("CS2")as IMySensorBlock; 
+if(hasInfo("Thrust") <0)
+{
+AddInfo("Thrust","3000");
+}
+
+
+TrackPlayer(); 
+
+ if(!DetectedTarget)
+ {
+ ChangeGroupAction(Forward,"Override",Convert.ToSingle(getInfo("Thrust")));
+ GoToNextPosition();
+ 
+ }
+
+} 
+ 
+void TrackPlayer() 
+{ 
+ 
+if(!(getSensorStatus(LS) || getSensorStatus(RS) || (getSensorStatus(TS1)||getSensorStatus(TS2)) || getSensorStatus(DS) || getSensorStatus(DCS) || getSensorStatus(TCS) || getSensorStatus(LCS)|| getSensorStatus(RCS))) 
+{ 
+ChangeGroupAction(Gyros,"Roll",0); 
+ChangeGroupAction(Gyros,"Pitch",0); 
+ChangeGroupAction2(Guns,"Shoot_Off"); 
+DetectedTarget = false;
+ ChangeGroupAction(Forward,"Override",0f);
+} 
+else 
+{ 
+ 
+if(getSensorStatus(LS))  
+ChangeGroupAction(Gyros,"Roll",-5f); 
+ 
+if(getSensorStatus(RS)) 
+ChangeGroupAction(Gyros,"Roll",5f); 
+ 
+if(getSensorStatus(TS1)||getSensorStatus(TS2)) 
+ChangeGroupAction(Gyros,"Pitch",5f); 
+ 
+if(getSensorStatus(DS)) 
+ChangeGroupAction(Gyros,"Pitch",-5f); 
+ 
+if(getSensorStatus(LCS)) 
+ChangeGroupAction(Gyros,"Roll",-3f); 
+ 
+if(getSensorStatus(RCS)) 
+ChangeGroupAction(Gyros,"Roll",3f); 
+ 
+if(getSensorStatus(TCS)) 
+ChangeGroupAction(Gyros,"Pitch",3f); 
+ 
+if(getSensorStatus(DCS)) 
+ChangeGroupAction(Gyros,"Pitch",-3f); 
+ 
+if(getSensorStatus(LCS)&&getSensorStatus(RCS)) 
+ChangeGroupAction(Gyros,"Roll",0); 
+ 
+if(getSensorStatus(DCS) && getSensorStatus(TCS)) 
+ChangeGroupAction(Gyros,"Pitch",0); 
+ 
+if(getSensorStatus(DCS) && getSensorStatus(TCS) && getSensorStatus(LCS)&&getSensorStatus(RCS)) 
+ChangeGroupAction2(Guns,"Shoot_On"); 
+else 
+ChangeGroupAction2(Guns,"Shoot_Off"); 
+
+
+if(!getSensorStatus(CS1)&&!getSensorStatus(CS2))
+ChangeGroupAction(Forward,"Override",5000f);
+else
+{
+ChangeGroupAction(Forward,"Override",0f);
+}
+
+DetectedTarget = true;
+} 
+
+} 
+ 
+ 
+ 
+	bool getSensorStatus(IMySensorBlock s)          
+	{          
+    if(s == null) 
+      return false; 
+	   
+     
+	  return (s.LastDetectedEntity!=null);          
+	}         
+	        
+void ChangeGroupAction(String GroupName , String Action, float value)                       
+{                      
+    var Group = new List <IMyBlockGroup>();                      
+    Group = GridTerminalSystem.BlockGroups;                      
+    // Loop through the entire list of groups                      
+    for ( int i = 0 ; i < Group.Count ; i++ )                      
+        {                      
+        // And find the group you are looking for                      
+        if ( Group[i].Name == GroupName )                      
+            {                      
+            var GroupCont = Group[i].Blocks;                      
+            // Loop through all blocks in the group and apply the new action                      
+            for ( int c = 0 ; c < GroupCont.Count ; c++ )                                      
+                {                      
+                    GroupCont[c].SetValue<float>(Action, value);                      
+                }                      
+            }                      
+        }                       
+}               
+ 
+void ChangeGroupAction2(String GroupName , String Action)                      
+    {                  
+               
+    var Group = new List <IMyBlockGroup>();                       
+    Group = GridTerminalSystem.BlockGroups;                       
+    // Loop through the entire list of groups                       
+    for ( int i = 0 ; i < Group.Count ; i++ )                       
+        {                       
+        // And find the group you are looking for                       
+        if ( Group[i].Name == GroupName )                       
+            {                       
+            var GroupCont = Group[i].Blocks;                       
+            // Loop through all blocks in the group and apply the new action                       
+            for ( int c = 0 ; c < GroupCont.Count ; c++ )                                       
+                {                       
+                    GroupCont[c].ApplyAction(Action);                       
+                }                       
+            }                       
+        }                       
+}               
+ 
+void FindPosition(double TargetX, double TargetY, double TargetZ , out double CenterX, out double CenterY, out double CenterZ,out double Yaw, out double Pitch ) 
+{ 
+ double LeftX = 0, LeftY = 0, LeftZ = 0, TopX = 0, TopY = 0, TopZ = 0;           
+  bool C_found = false, L_found = false, T_found = false,Output_found = false;      
+ 
+
+ List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();    
+ CenterX = 0;      
+ CenterY = 0;      
+ CenterZ = 0;   
+  
+  Yaw = 0;
+  Pitch = 0;
+ GridTerminalSystem.SearchBlocksOfName("GPS", blocks);        
+    for (int i = 0; i < blocks.Count; i++)      
+    {      
+        IMyTerminalBlock block = blocks[i];      
+        if (block.CustomName.Contains("GPS Center"))      
+        {      
+            CenterX = block.GetPosition().GetDim(0);      
+            CenterY = block.GetPosition().GetDim(1);      
+            CenterZ = block.GetPosition().GetDim(2);      
+            C_found = true;      
+        }      
+        else if (block.CustomName.Contains("GPS Left"))      
+        {      
+            LeftX = block.GetPosition().GetDim(0);      
+            LeftY = block.GetPosition().GetDim(1);      
+            LeftZ = block.GetPosition().GetDim(2);      
+            L_found = true;      
+        }      
+        else if (block.CustomName.Contains("GPS Top"))      
+        {      
+            TopX = block.GetPosition().GetDim(0);      
+            TopY = block.GetPosition().GetDim(1);      
+            TopZ = block.GetPosition().GetDim(2);      
+            T_found = true;      
+        }      
+	     
+    } 
+ 
+if (C_found && L_found && T_found)      
+    {      
+        //calculating target vector        
+        double TgVecX = TargetX - CenterX;      
+        double TgVecY = TargetY- CenterY;      
+        double TgVecZ = TargetZ - CenterZ;      
+        TgDiff = Math.Sqrt(TgVecX * TgVecX + TgVecY * TgVecY + TgVecZ * TgVecZ);      
+      
+        //GPS Left vector        
+        double LeVecX = LeftX - CenterX;      
+        double LeVecY = LeftY - CenterY;      
+        double LeVecZ = LeftZ - CenterZ;      
+        double LeftDiff = Math.Sqrt(LeVecX * LeVecX + LeVecY * LeVecY + LeVecZ * LeVecZ);      
+      
+        // angle Left vector to target vector   (Yaw)        
+        Yaw = Math.Round(Math.Acos((LeVecX * TgVecX + LeVecY * TgVecY + LeVecZ * TgVecZ) / (LeftDiff * TgDiff)) * 180 / Math.PI - 90, 1);      
+      
+        //GPS Top vector        
+        double ToVecX = TopX - CenterX;      
+        double ToVecY = TopY - CenterY;      
+        double ToVecZ = TopZ - CenterZ;      
+        double TopDiff = Math.Sqrt(ToVecX * ToVecX + ToVecY * ToVecY + ToVecZ * ToVecZ);      
+      
+        // angle Top vector to target vector (Pitch)                
+        Pitch = Math.Round(-1 * (Math.Acos((ToVecX * TgVecX + ToVecY * TgVecY + ToVecZ * TgVecZ) / (TopDiff * TgDiff)) * 180 / Math.PI - 90), 1);       
+         
+        double ForwardX = LeVecY * ToVecZ - LeVecZ * ToVecY;      
+        double ForwardY = LeVecZ * ToVecX - LeVecX * ToVecZ;      
+        double ForwardZ = LeVecX * ToVecY - LeVecY * ToVecX;      
+        double ForwDist = Math.Sqrt(ForwardX * ForwardX + ForwardY * ForwardY + ForwardZ * ForwardZ);      
+                      
+        double forward_angle = Math.Round(Math.Acos((ForwardX * TgVecX + ForwardY * TgVecY + ForwardZ * TgVecZ) / (ForwDist * TgDiff)) * 180 / Math.PI, 1);      
+      
+        // Check if the target is behind the ship and adjust yaw angle      
+        if(forward_angle > 90)  {      
+           Yaw = (Yaw<0)?-180-Yaw:180-Yaw;      
+        }      
+              
+            
+        
+     
+    } 
+ 
+} 
+
+void GoToNextPosition()
+{
+int CheckpointNum = Convert.ToInt32(getInfo("CheckpointNum"));
+int GoingTo = Convert.ToInt32(getInfo("GoingTo"));
+if(GoingTo > CheckpointNum)
+{
+  UpdateInfo("GoingTo","1");  
+  GoingTo =1;
+}  
+ 
+
+double posx=0,posy=0,posz=0,tarx=0,tary=0,tarz=0, pitch =0 ,yaw =0;
+string xn = "x"+GoingTo, yn = "y"+GoingTo , zn = "z"+GoingTo;
+tarx = Convert.ToDouble(getInfo(xn));
+tary = Convert.ToDouble(getInfo(yn));
+tarz = Convert.ToDouble(getInfo(zn));
+
+FindPosition(tarx,tary,tarz,out posx,out posy,out posz,out yaw,out pitch); 
+
+UpdateInfo("PosX",""+Math.Round(posx,1));
+UpdateInfo("PosY",""+Math.Round(posy,1));
+UpdateInfo("PosZ",""+Math.Round(posz,1));
+UpdateInfo("Yaw",""+yaw);
+UpdateInfo("Pitch",""+pitch);
+
+
+if(Math.Abs(posx-tarx)<3 && Math.Abs(posy- tary)< 3 && Math.Abs(posz - tarz)<3)
+{
+UpdateInfo("GoingTo",(GoingTo +1).ToString());
+}
+
+
+
+if(yaw > .1)
+{
+ ChangeGroupAction(Gyros,"Roll",2f); 
+}
+else
+if(yaw < -.1)
+{
+ChangeGroupAction(Gyros,"Roll",-2f); 
+}
+else
+ChangeGroupAction(Gyros,"Roll",0f); 
+
+if(pitch > .1)
+{
+ ChangeGroupAction(Gyros,"Pitch",2f); 
+}
+else
+if(pitch < -.1)
+{
+ChangeGroupAction(Gyros,"Pitch",-2f); 
+}
+else
+ChangeGroupAction(Gyros,"Pitch",0f); 
+
+
+}
+String getInfo(String name)
+{
+int infoIndex= hasInfo(name);
+if(infoIndex<0) return "";
+var allinfo = Data.GetPublicText();
+int semi = allinfo.IndexOf(";\n",infoIndex);
+return allinfo.Substring(infoIndex +1,semi-(infoIndex+1));
+
+}
+int hasInfo(String name)
+{
+var allinfo = Data.GetPublicText();
+int nameIndex = allinfo.IndexOf(";\n"+name+":",0);
+if(nameIndex>0)
+{
+return allinfo.IndexOf(":",nameIndex);
+}
+return -1;
+}
+bool UpdateInfo(String name, String Value)
+{
+bool didRemove = (RemoveInfo(name) != "");
+AddInfo(name , Value);
+return didRemove;
+}
+
+String RemoveInfo(String name)
+{
+int HInfo= hasInfo(name);
+if(HInfo<0) return"";
+
+String infotrv = getInfo(name);
+
+String format = name+":"+infotrv+";\n";
+String allinfo = Data.GetPublicText();
+String newname = "";
+newname = allinfo.Remove(allinfo.IndexOf(name+":"+infotrv),format.Length);
+Data.WritePublicText(newname);
+return infotrv;
+}
+
+bool AddInfo(String name,String Value)
+{
+  String format = name+":" + Value+";\n";
+  Data.WritePublicText(format,true);
+  return true;
+}

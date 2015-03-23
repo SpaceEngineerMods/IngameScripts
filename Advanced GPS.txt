@@ -1,0 +1,246 @@
+int baza_x = 991;
+int baza_y = 1724;
+int baza_z = 3352;   // ����             
+               
+int distance = 300;                // ��������� �� ���� ��� ������� ������ ���������                      
+string group_name = "+-+";         // ��� ������ ������� ����������  
+string giro_name = "+giro+" ;    // ��� ���������
+string timer_name = "+timer+";     // ��� �������      
+        
+double Vsimul = 0.8;               // �������� �� �������� ��������� ��� �������� ������� ������� ��� 104�/�          
+double skor_pov = 0.05;            // �������� �������� ���������� (���������� ��� ���� ����� �������)    
+          
+           
+// ************************************************   Don't change **************************************************************         
+int i = 0;  		             
+int len = 0;      
+List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();           
+          
+List<IMyTerminalBlock> timers = new List<IMyTerminalBlock>();            
+double TgDiff =0;    
+string tim="";    
+double yaw_angle,pitch_angle;    
+string giro_rezim;      
+ bool giro_upr; 
+ 
+IMyTimerBlock timer;  
+IMyBeacon mayak;  
+
+
+
+
+public  void uskorenie (string input){               //funcia uskorenia i tormozenia        
+    List<IMyBlockGroup> groups = new List<IMyBlockGroup>();       
+    List<IMyTerminalBlock> thrusters = new List<IMyTerminalBlock>();       
+    groups = GridTerminalSystem.BlockGroups;      
+    for(int i = 0; i < groups.Count; i++){   
+        if (groups[i].Name == group_name) {      
+            thrusters = groups[i].Blocks;            
+            break;            
+        }          
+    }              
+    for(int j = 0; j < thrusters.Count; j++){            
+        for(int k = 0; k < 20; k++) {           
+                if (input == "+"){thrusters[j].GetActionWithName("IncreaseOverride").Apply(thrusters[j]);}            
+                if (input == "-"){thrusters[j].GetActionWithName("DecreaseOverride").Apply(thrusters[j]);}            
+        }          
+    }              
+}          
+
+
+
+          
+void Main()                   
+{         
+    
+    bool err = false;    
+    double CenterX = 0, CenterY = 0, CenterZ = 0, LeftX = 0, LeftY = 0, LeftZ = 0, TopX = 0, TopY = 0, TopZ = 0;       
+    bool C_found = false, L_found = false, T_found = false,Output_found = false;      
+            
+
+    var Beacons = new List<IMyTerminalBlock>(); //boring declarations  
+    GridTerminalSystem.GetBlocksOfType<IMyBeacon>(Beacons);                        
+    mayak = Beacons[0] as IMyBeacon;               // nahodim 1 mayak    
+      
+     
+ 
+ 
+   
+   IMyTimerBlock timer= null;   
+  
+   var timers = new List<IMyTerminalBlock>(); //boring declarations  
+  
+   GridTerminalSystem.GetBlocksOfType<IMyTimerBlock>(timers);  // Searches for gyros  
+      
+    for (int i=0;i<timers.Count;i++) {  
+        if (timers[i].CustomName.Contains(timer_name)) {  
+             timer = timers[i] as IMyTimerBlock;  
+             break;   
+        }  
+    }  
+
+   IMyGyro giro= null;  
+ 
+   var giros = new List<IMyTerminalBlock>(); //boring declarations 
+ 
+   GridTerminalSystem.GetBlocksOfType<IMyGyro>(giros);  // Searches for gyros 
+     
+    for (int i=0;i<giros.Count;i++) { 
+        if (giros[i].CustomName.Contains(giro_name)) { 
+             giro = giros[i] as IMyGyro;  
+             break;  
+        } 
+    } 
+    if (giro == null ) { err=true;}  
+    if (mayak ==null ) {err =true;} 
+
+ 
+ 
+ 
+ 
+ 
+    blocks.Clear();  
+  
+    GridTerminalSystem.SearchBlocksOfName("GPS", blocks);       
+    for (int i = 0; i < blocks.Count; i++)     
+    {     
+        IMyTerminalBlock block = blocks[i];     
+        if (block.CustomName.Contains("GPS Center"))     
+        {     
+            CenterX = block.GetPosition().GetDim(0);     
+            CenterY = block.GetPosition().GetDim(1);     
+            CenterZ = block.GetPosition().GetDim(2);     
+            C_found = true;     
+        }     
+        else if (block.CustomName.Contains("GPS Left"))     
+        {     
+            LeftX = block.GetPosition().GetDim(0);     
+            LeftY = block.GetPosition().GetDim(1);     
+            LeftZ = block.GetPosition().GetDim(2);     
+            L_found = true;     
+        }     
+        else if (block.CustomName.Contains("GPS Top"))     
+        {     
+            TopX = block.GetPosition().GetDim(0);     
+            TopY = block.GetPosition().GetDim(1);     
+            TopZ = block.GetPosition().GetDim(2);     
+            T_found = true;     
+        }     
+	    
+    }     
+    
+    
+    
+    if (C_found && L_found && T_found)     
+    {     
+        //calculating target vector       
+        double TgVecX = baza_x - CenterX;     
+        double TgVecY = baza_y- CenterY;     
+        double TgVecZ = baza_z - CenterZ;     
+        TgDiff = Math.Sqrt(TgVecX * TgVecX + TgVecY * TgVecY + TgVecZ * TgVecZ);     
+     
+        //GPS Left vector       
+        double LeVecX = LeftX - CenterX;     
+        double LeVecY = LeftY - CenterY;     
+        double LeVecZ = LeftZ - CenterZ;     
+        double LeftDiff = Math.Sqrt(LeVecX * LeVecX + LeVecY * LeVecY + LeVecZ * LeVecZ);     
+     
+        // angle Left vector to target vector   (Yaw)       
+        yaw_angle = Math.Round(Math.Acos((LeVecX * TgVecX + LeVecY * TgVecY + LeVecZ * TgVecZ) / (LeftDiff * TgDiff)) * 180 / Math.PI - 90, 1);     
+     
+        //GPS Top vector       
+        double ToVecX = TopX - CenterX;     
+        double ToVecY = TopY - CenterY;     
+        double ToVecZ = TopZ - CenterZ;     
+        double TopDiff = Math.Sqrt(ToVecX * ToVecX + ToVecY * ToVecY + ToVecZ * ToVecZ);     
+     
+        // angle Top vector to target vector (Pitch)               
+        pitch_angle = Math.Round(-1 * (Math.Acos((ToVecX * TgVecX + ToVecY * TgVecY + ToVecZ * TgVecZ) / (TopDiff * TgDiff)) * 180 / Math.PI - 90), 1);      
+     
+        double ForwardX = LeVecY * ToVecZ - LeVecZ * ToVecY;     
+        double ForwardY = LeVecZ * ToVecX - LeVecX * ToVecZ;     
+        double ForwardZ = LeVecX * ToVecY - LeVecY * ToVecX;     
+        double ForwDist = Math.Sqrt(ForwardX * ForwardX + ForwardY * ForwardY + ForwardZ * ForwardZ);     
+                     
+        double forward_angle = Math.Round(Math.Acos((ForwardX * TgVecX + ForwardY * TgVecY + ForwardZ * TgVecZ) / (ForwDist * TgDiff)) * 180 / Math.PI, 1);     
+     
+        // Check if the target is behind the ship and adjust yaw angle     
+        if(forward_angle > 90)  {     
+           yaw_angle = (yaw_angle<0)?-180-yaw_angle:180-yaw_angle;     
+        }     
+             
+            
+    
+     //   if (yaw_angle < 0) giro_rezim = "Left";     
+    //    if (yaw_angle > 0) giro_rezim = "Right";     
+    //    if (pitch_angle < 0) giro_rezim= "Down";     
+    //    if (pitch_angle > 0) giro_rezim= "Up";          
+           
+    }  else {  err=true; }     
+    
+    
+    
+//****** ��������� ����� ������ *****                                                       
+    double t = Math.Ceiling(TgDiff/(104*Vsimul));  // ����� ������                                                                   
+    if (t>59) {             
+         tim = Convert.ToString(Math.Ceiling(t/60))+" min  "+Convert.ToString(t%60)+" sec";             
+    } else { tim = Convert.ToString(t)+" sec"; }             
+// ***********************************    
+
+
+
+    string rezim = mayak.CustomName.Substring(0,1);
+
+
+   if (rezim == "*")  {  
+    
+    if (!giro.GyroOverride) {giro.GetActionWithName("Override").Apply(giro);} //Enables gyro override  
+
+    if (yaw_angle > 1) for (;giro.Yaw < skor_pov;) {giro.GetActionWithName("IncreaseYaw").Apply(giro); }     
+    if (yaw_angle < -1) for (;giro.Yaw > skor_pov*-1;) {giro.GetActionWithName("DecreaseYaw").Apply(giro); }     
+    if (yaw_angle > -1 && yaw_angle < 1) {
+          for (;giro.Yaw < 0;) {giro.GetActionWithName("IncreaseYaw").Apply(giro); }
+          for (;giro.Yaw > 0;) {giro.GetActionWithName("DecreaseYaw").Apply(giro); }
+    }
+    if (pitch_angle > 1) for (;giro.Pitch < skor_pov;) {giro.GetActionWithName("IncreasePitch").Apply(giro); }      
+    if (pitch_angle < -1) for (;giro.Pitch > skor_pov*-1;) {giro.GetActionWithName("DecreasePitch").Apply(giro); }      
+    if (pitch_angle > -1 && pitch_angle < 1) { 
+          for (;giro.Pitch < 0;) {giro.GetActionWithName("IncreasePitch").Apply(giro); } 
+          for (;giro.Pitch > 0;) {giro.GetActionWithName("DecreasePitch").Apply(giro); } 
+    } 
+
+    if (TgDiff>distance && 
+         pitch_angle > -10 &&
+         pitch_angle < 10 &&
+         yaw_angle > -10 &&
+         yaw_angle < 10 ) {uskorenie("+");} else {uskorenie("-");}
+  
+  
+  
+    mayak.SetCustomName ("* "+yaw_angle+(char)176+"     "+pitch_angle+(char)176+    
+                       " *                   ( "+Math.Ceiling(TgDiff)+" )  "+tim);     
+      
+    }    
+  
+  
+   if (rezim == "+")  {   
+    if (giro.GyroOverride) {giro.GetActionWithName("Override").Apply(giro);} //Enables gyro override   
+ 
+    mayak.SetCustomName ("+  "+Math.Ceiling(CenterX)+"    "+Math.Ceiling(CenterY)+"    "+Math.Ceiling(CenterZ)+"  +");      
+   }
+  
+  
+   if (rezim == "-")  {    
+    if (giro.GyroOverride) {giro.GetActionWithName("Override").Apply(giro);} //Enables gyro override   
+ 
+    mayak.SetCustomName ("- "+yaw_angle+(char)176+"     "+pitch_angle+(char)176+     
+                       " -                   ( "+Math.Ceiling(TgDiff)+" )  "+tim);      
+   } 
+  
+  
+    
+    //if (err) {mayak.SetCustomName ("Err Check Blocks");}    
+   timer.GetActionWithName("Start").Apply(timer);                 
+           
+                  
+}

@@ -1,0 +1,1168 @@
+// Version number: 3.0
+//------------------------------------------------------------------
+//---------------------CONST DECLARE----------------------
+//------------------------------------------------------------------
+const string GYRO_FRONT_NAME = "FrontGyro";
+const string GYRO_BACK_NAME   = "BackGyro";
+const string GYRO_TOP_NAME     = "TopGyro";
+
+const string SENSOR_SMALL_SHIP_NAME = "SSSensor";
+const string SENSOR_LARGE_SHIP_NAME = "LSSensor";
+const string SENSOR_STATION_NAME       = "SNSensor";
+const string SENSOR_ASTEROID_NAME    = "ADSensor";
+const string DETECT_SMALL_SHIPS           = "Detect Small Ships";
+const string DETECT_LARGE_SHIPS           = "Detect Large Ships";
+const string DETECT_STATIONS                 = "Detect Stations";
+const string DETECT_ASTEROIDS               = "Detect Asteroids";
+
+const string TFRONT    = "FTThruster";
+const string TBACK      = "BKThruster";
+const string TLEFT       = "LTThruster";
+const string TRIGHT     = "RTThruster";
+const string TTOP        = "TPThruster";
+const string TBOTTOM = "BMThruster";
+
+const string CFRONT    = "FTConnector";
+const string CBACK      = "BKConnector";
+const string CLEFT       = "LTConnector";
+const string CRIGHT     = "RTConnector";
+const string CTOP        = "TPConnector";
+const string CBOTTOM = "BMConnector";
+
+const string GPS_FRONT_X = "GPSF X";
+const string GPS_FRONT_Y = "GPSF Y";
+const string GPS_FRONT_Z = "GPSF Z";
+const string GPS_BACK_X = "GPSB X";
+const string GPS_BACK_Y = "GPSB Y";
+const string GPS_BACK_Z = "GPSB Z";
+const string GPS_TOP_X = "GPST X";
+const string GPS_TOP_Y = "GPST Y";
+const string GPS_TOP_Z = "GPST Z";
+  
+const string BUTTON0 = "RESET SHIP";  
+const string BUTTON1  = "START-STOP MISSION";  
+const string BUTTON2 = "RESTART MISSION";  
+const string BUTTON3 = "RESET MISSION";  
+const string BUTTON4 = "GO STOP";
+const string BUTTON5 = "GO TO";
+const string BUTTON6 = "WAIT";
+const string BUTTON7 = "MINE";
+const string BUTTON8 = "ORBIT";  
+const string BUTTON9 = "FIRE";
+const string BUTTON10 = "REPEAT";
+const string BUTTON11  = "LAND";
+const string BUTTON12 = "DOCK";
+  
+const string MISSION_NAME = "ShipMission";
+const string SAVE_FILE_NAME = "SaveFile";
+  
+const string IY  = "IncreaseYaw";  
+const string DY = "DecreaseYaw";  
+const string IP  = "IncreasePitch";  
+const string DP = "DecreasePitch";  
+const string IR  = "IncreaseRoll";  
+const string DR = "DecreaseRoll";  
+
+const string YAW  = "Yaw";  
+const string PITCH = "Pitch";  
+const string ROLL  = "Roll";  
+  
+const int ROUND_GPS = 2;  
+const int RCMS = 2;  
+const int RCLS = 4;  
+const int LOW_SPEED_GYRO = 4;  
+const int FAST_SPEED_GYRO = 5;  
+const int MIN_SPEED_THRUSTER = 1;  
+const int SLOW_ACC_THRUSTER = 10;  
+const int FAST_ACC_THRUSTER = 20;  
+const int ALIGN_PRECISION = 1;  
+const int DISTANCE_PRECISION = 10;
+const int TIMER_INTERVAL = 10;
+const double MIN_DISTANCE_TO_GO = 0.5;
+const double DISTANCE_TO_GO = 2;
+const double MAX_DISTANCE_TO_GO = 5;
+  
+const double GYRO_SPEED_MIN = 0.03F;  
+const double GYRO_SPEED = 0.1F;  
+const double GYRO_SPEED_MAX = 0.6F;  
+//const double REFRESH_SPEED = 0.017;
+const double REFRESH_SPEED = 0.034;
+//const double REFRESH_SPEED = 0.085;
+//------------------------------------------------------------------  
+//--------------------GLOBAL VARIABLES------------------  
+//------------------------------------------------------------------  
+string Action = "";
+string UnlockSequence = "";
+
+bool isAlignX     = false;  
+bool isAlignX_R = false;  
+bool isAlignY     = false;  
+bool isAlignY_R = false;  
+bool isAlignZ     = false;  
+bool isAlignZ_R = false;  
+bool isReseting = false;  
+bool areThrustersInitialized = false;
+bool isLandingGearSequenceInitialized = false;
+bool isResetTimer = false;
+bool stopWait = false;  
+bool areButtonsInitialized = false;  
+bool shipLocked = false;
+bool isMissionStarted = false;
+bool isShipLanded = false;
+bool isShipDocked = false;
+bool isShipMoving = false;
+  
+int initializedThrusters = 0;
+int CurrentMission = 1;
+int nbExec = 0;
+
+double shipSpeed = 0;
+double LastDistance = -1;
+double LGSY = 0;
+double LGSP = 0;
+double LGSR = 0;
+
+double[] LastPosition = {0, 0, 0};
+double[] LastPositionForSpeed = {0, 0, 0};
+
+string[] FTT = {"Forward","En avant","Vpřed","Vorwärts","Adelante","Avanti","Voorwaards","Do przodu","Para frente"}; 
+string[] BKT = {"Backward","En arrière","Zpět","Rückwärts","Hacia atrás","Indietro","Achteruit","Do tyłu","Para trás"}; 
+string[] LTT = {"Left","Gauche","Vlevo","Links","Izquierda","Sinistra","Links","W lewo","Esquerda"}; 
+string[] RTT = {"Right","Droite","Vpravo","Rechts","Derecha","Diestra","Rechts","W prawo","Direita"}; 
+string[] TPT = {"Up","Haut","Nahoru","Aufwärts","Arriba","Sù","Omhoog","W górę","Acima"}; 
+string[] BMT = {"Down","Bas","Dolů","Abwärts","Abajo","Giù","Omlaag","W dół","Abaixo"};
+
+string[] LGS = {"Unlock","Déverrouillé","Odemčeno","Entriegelt","Desbloqueado","Sbloccato","Ontgrendeld","Odblokowany","Destrancado"};
+
+DateTime Timer;
+  
+IMyGyro FrontGyro = null;
+IMyGyro BackGyro = null;
+IMyGyro TopGyro   = null;
+IMyTextPanel SaveFile = null;
+IMyTerminalBlock Mission = null;
+IMySensorBlock SSSensor = null;
+IMySensorBlock LSSensor = null;
+IMySensorBlock SNSensor = null;
+IMySensorBlock ADSensor = null;
+IMyShipConnector ConnectedConnector = null;
+
+List<IMyTerminalBlock> Thrusters = new List<IMyTerminalBlock>();
+List<IMyTerminalBlock> Buttons = new List<IMyTerminalBlock>();
+   
+//------------------------------------------------------------------------
+//-----------------------UTILITY FUNCTIONS----------------------
+//------------------------------------------------------------------------
+public bool ConvertStringToBool(string value){if(value=="True"||value=="true")return true;else return false;}
+public bool isSuperior(double d1, double d2){if(round(d1) > round(d2)){return true;}else{return false;}}   
+public bool isEqual(double d1, double d2){if(Math.Abs(round(d1) - round(d2)) <= ALIGN_PRECISION) {return true;}else{return false;}}   
+public bool wait(double i){if(Math.Abs((Timer-DateTime.Now).TotalSeconds) >= i){isResetTimer=false;return true;}else return false;}
+public bool isShipFacingDest(double[] c){if(distance(getCurrentPosition(),c)<distance(getCurrentPositionBack(),c))return true;else  return false;}
+public bool isShipOnDestination(double[] c, double d){double[] Pos=getCurrentPosition();if(distanceShipDest(c)<=d)return true;else;return false;} 
+public bool Contains(string[] a, string val){return Array.IndexOf(a, val) != -1 ? true : false;}
+
+public string GetLine(string t,int n){string[] l=t.Split('\n');return l.Length>=n ? l[n] : null;}
+public string convertConnectorToDirection(string c){if(c==CFRONT)return "FRONT";else if(c==CBACK)return "BACK";else if(c==CLEFT)return "LEFT";else if(c==CRIGHT)return "RIGHT";else if(c==CTOP)return "TOP";else if(c==CBOTTOM)return "BOTTOM";else return c;} 
+public string convertDirectionToConnector(string d){if(d=="FRONT")return CFRONT;else if(d=="BACK")return CBACK;else if(d=="LEFT")return CLEFT;else if(d=="RIGHT")return CRIGHT;else if(d=="TOP")return CTOP;else if(d=="BOTTOM")return CBOTTOM;else return d;} 
+public string convertDirectionToThruster(string d){if(d=="FRONT")return TFRONT;else if(d=="BACK")return TBACK;else if(d=="LEFT")return TLEFT;else if(d=="RIGHT")return TRIGHT;else if(d=="TOP")return TTOP;else if(d=="BOTTOM")return TBOTTOM;else return d;} 
+public string convertDirectionToReverseThruster(string d){if(d=="FRONT")return TBACK;else if(d=="BACK")return TFRONT;else if(d=="LEFT")return TRIGHT;else if(d=="RIGHT")return TLEFT;else if(d=="TOP")return TBOTTOM;else if(d=="BOTTOM")return TTOP;else return d;} 
+
+public int countStep(){string[] s=Mission.CustomName.Split('/');return s.Length;}
+public int E(){if(nbExec > 1000) nbExec=0; else nbExec++; return nbExec;}
+
+public double getFrontGyroX(){return Math.Round(FrontGyro.GetPosition().GetDim(0),RCMS);}
+public double getFrontGyroY(){return Math.Round(FrontGyro.GetPosition().GetDim(1),RCMS);}
+public double getFrontGyroZ(){return Math.Round(FrontGyro.GetPosition().GetDim(2),RCMS);}
+public double getBackGyroX(){return Math.Round(BackGyro.GetPosition().GetDim(0),RCMS);}
+public double getBackGyroY(){return Math.Round(BackGyro.GetPosition().GetDim(1),RCMS);}
+public double getBackGyroZ(){return Math.Round(BackGyro.GetPosition().GetDim(2),RCMS);}
+public double getTopGyroX(){return Math.Round(TopGyro.GetPosition().GetDim(0),RCMS);}
+public double getTopGyroY(){return Math.Round(TopGyro.GetPosition().GetDim(1),RCMS);}
+public double getTopGyroZ(){return Math.Round(TopGyro.GetPosition().GetDim(2),RCMS);}
+public double round(double d){ return (Math.Round(d, RCMS)*Math.Pow(10, RCMS));}
+  
+public double distance(double[] A,double[] B){return Math.Sqrt((B[0]-A[0])*(B[0]-A[0])+(B[1]-A[1])*(B[1]-A[1])+(B[2]-A[2])*(B[2]-A[2]));}
+public double distanceShipDest(double[] c){double[] s=getCurrentPosition();return distance(c,s);}
+public double AngleBetween(Vector3D v1, Vector3D v2){v1.Normalize();v2.Normalize();double ratio=DotProduct(v1,v2);double theta;if(ratio<0){theta=Math.PI-2.0*Math.Asin((-v1-v2).Length()/2.0);}else{theta = 2.0 * Math.Asin((v1 - v2).Length() / 2.0);}return RadianToDegree(theta);}
+public double DotProduct(Vector3D v1, Vector3D v2){return v1.X*v2.X+v1.Y*v2.Y+v1.Z*v2.Z;} 
+public double RadianToDegree(double angle){return angle*(180.0/Math.PI);}
+  
+public double[] createVector(double[] A, double[] B){double X=(B[0]-A[0]);double Y=(B[1]-A[1]);double Z=(B[2]-A[2]);double[] v={X,Y,Z};return v;}
+public double[] getCurrentPosition(){double[] c ={getFrontGyroX(),getFrontGyroY(),getFrontGyroZ()};return c;}
+public double[] getCurrentPositionBack(){double[] c ={getBackGyroX(),getBackGyroY(),getBackGyroZ()};return c;}
+public double[] getCurrentPositionTop(){double[] c ={getTopGyroX(),getTopGyroY(),getTopGyroZ()};return c;}
+  
+public void debug(string m){List<IMyTerminalBlock> D=new List<IMyTerminalBlock>();GridTerminalSystem.SearchBlocksOfName("Debug",D);if(D.Count > 0)D[0].SetCustomName("Debug : "+m);}  
+public void setShipStatut(string m){List<IMyTerminalBlock> S=new List<IMyTerminalBlock>();GridTerminalSystem.SearchBlocksOfName("ShipStatus",S);if(S.Count > 0)S[0].SetCustomName("ShipStatus : "+m);}   
+public void setLastPosition(){LastPosition[0]=getFrontGyroX();LastPosition[1]=getFrontGyroY();LastPosition[2]=getFrontGyroZ();}
+public void lockShip(bool b){if(shipLocked!=b){shipLocked=b;List<IMyTerminalBlock>G=new List<IMyTerminalBlock>();GridTerminalSystem.GetBlocksOfType<IMyGyro>(G);for(int i=0;i<G.Count;i++){IMyGyro g=G[i] as IMyGyro;g.GetActionWithName("Override").Apply(g);}}}
+public void refreshShipSpeed(){double[] c=getCurrentPosition();shipSpeed=(distance(c,LastPositionForSpeed)/REFRESH_SPEED);LastPositionForSpeed=c;} 
+public void landShip(bool l){List<IMyTerminalBlock> lg=new List<IMyTerminalBlock>();GridTerminalSystem.GetBlocksOfType<IMyLandingGear>(lg);for(int i=0;i<lg.Count;i++){if(l)lg[i].GetActionWithName("Lock").Apply(lg[i]);else lg[i].GetActionWithName("Unlock").Apply(lg[i]);}}  
+public void dockShip(IMyShipConnector c,bool d){if(isShipDocked!=d){c.GetActionWithName("SwitchLock").Apply(c);}}
+
+public void Serialize(){     
+    SaveFile.WritePublicText("", false); 
+    SaveFile.WritePublicText(UnlockSequence+"\n", true); 
+    SaveFile.WritePublicText(shipLocked.ToString()+"\n", true); 
+    SaveFile.WritePublicText(isMissionStarted.ToString()+"\n", true); 
+    SaveFile.WritePublicText(CurrentMission.ToString()+"\n", true); 
+    SaveFile.WritePublicText(isShipLanded.ToString()+"\n", true); 
+    SaveFile.WritePublicText(isShipDocked.ToString()+"\n", true); 
+} 
+ 
+public void Deserialize(){ 
+    SaveFile = GridTerminalSystem.GetBlockWithName(SAVE_FILE_NAME) as IMyTextPanel; 
+    if(SaveFile.GetPublicText().Length > 0 && SaveFile != null){ 
+        UnlockSequence = GetLine(SaveFile.GetPublicText(), 0); 
+        shipLocked          = ConvertStringToBool(GetLine(SaveFile.GetPublicText(),1)); 
+        isMissionStarted = ConvertStringToBool(GetLine(SaveFile.GetPublicText(),2)); 
+        CurrentMission    = Convert.ToInt32(GetLine(SaveFile.GetPublicText(), 3)); 
+        isShipLanded       = ConvertStringToBool(GetLine(SaveFile.GetPublicText(),4)); 
+        isShipDocked      = ConvertStringToBool(GetLine(SaveFile.GetPublicText(),5));
+    } 
+}
+//------------------------------------------------------------------------   
+//---------------------VOID MAIN PROGRAM---------------------   
+//------------------------------------------------------------------------   
+void Main(){
+    if(E()%2==0){
+
+        Deserialize();
+        getNewAction();
+
+        if(Action==BUTTON0){resetShip();}
+        else if(initializeScript()){
+            refreshShipSpeed();
+            doAction();
+ 
+            if(isMissionStarted){
+                lockShip(true);
+                readMission();
+            }
+            else{
+                stopShip();
+                resetAlign();
+                lockShip(false);
+            } 
+            //UpdateGPS();
+            //UpdateGyroInfo();
+            Serialize();
+        }
+    }
+}
+
+//------------------------------------------------------------------------ 
+//---------------MISSION READING SERVICES-----------------
+//------------------------------------------------------------------------
+public void getNewAction() {for(int i=0;i<Buttons.Count;i++){IMyTimerBlock B=Buttons[i] as IMyTimerBlock;if(B.IsCountingDown){Action=Buttons[i].CustomName;B.GetActionWithName("Stop").Apply(B);}}}   
+
+public void doAction(){
+    for(int i=0;i<Buttons.Count;i++){
+    	            if(Action== BUTTON1) startStopMission();   
+	        else if(Action==BUTTON2) restartMission();   
+    	    else if(Action==BUTTON3) resetMission();   
+	        else if(Action==BUTTON4) AddGoStop(); 
+    	    else if(Action==BUTTON5) AddGoTo(); 
+    	    else if(Action==BUTTON6) AddWait(); 
+        else if(Action==BUTTON7) AddMine(); 
+    	    else if(Action==BUTTON8) AddOrbit();   
+	        else if(Action==BUTTON9) AddFire();   
+    	    else if(Action==BUTTON10) AddRepeat(); 
+    	}
+}
+
+public void 	AddGoStop()   {double[] c=getCurrentPosition();if(detectLandingChanged()>0)AddLanding();else if(detectConnectorChanged()!="")AddDocking();else addActionToMission(BUTTON4,c);resetAction();}
+public void 	AddGoTo()      {double[] c=getCurrentPosition();addActionToMission(BUTTON5,c);resetAction();}
+public void AddWait()       {string s=BUTTON6;string[] toDo=Mission.CustomName.Split('/');string[] param=toDo[toDo.Length-1].Split(':');if(param[0]==BUTTON6){param[1]=(Convert.ToDouble(param[1])+5).ToString();s+=":"+param[1];Mission.SetCustomName(Mission.CustomName.Substring(0,(Mission.CustomName.Length-1)-toDo[toDo.Length-1].Length));}else{s+=":5";}addActionToMission(s,null);resetAction();}
+public void AddLanding()  {string s=BUTTON11+":"+detectLandingChanged().ToString();string[] toDo=Mission.CustomName.Split('/');string[] param=toDo[toDo.Length-1].Split(':');if(param[0]!=BUTTON11){addActionToMission(s, null);}resetAction();}
+public void AddDocking() {string s=BUTTON12+":"+convertConnectorToDirection(detectConnectorChanged());string[] toDo=Mission.CustomName.Split('/');string[] param=toDo[toDo.Length-1].Split(':');if(param[0]!=BUTTON12){addActionToMission(s, null);}resetAction();}
+public void AddMine()       {resetAction();}
+public void AddOrbit()       {string s=BUTTON8;string[] toDo=Mission.CustomName.Split('/');string[] param=toDo[toDo.Length-1].Split(':');if(param[0]==BUTTON8){param[1]=(Convert.ToDouble(param[1])+50).ToString();s+=":"+param[1];s+=":"+param[2];Mission.SetCustomName(Mission.CustomName.Substring(0,(Mission.CustomName.Length-1)-toDo[toDo.Length-1].Length));}else{s+=":50:0";}addActionToMission(s,getCurrentPosition());resetAction();}
+public void 	AddFire()         {resetAction();}
+ 
+public void AddRepeat()   {addActionToMission(BUTTON10,null);resetAction();}
+   
+public void addActionToMission(string s, double[] c){string m="";if(c!=null)m="/"+s+":"+c[0].ToString()+":"+c[1].ToString()+":"+c[2].ToString();else m="/"+s;Mission.SetCustomName(Mission.CustomName+m);}
+
+//------------------------------------------------------------------------
+//--------------MISSION EXECUTION SERVICES---------------
+//------------------------------------------------------------------------
+public void readMission(){ 
+    string[] toDo=Mission.CustomName.Split('/');
+    string[] param;string A;
+    if(CurrentMission<toDo.Length){
+        param=toDo[CurrentMission].Split(':');
+        A = param[0];
+        if(A==BUTTON4){
+            double[] c={Convert.ToDouble(param[1]), Convert.ToDouble(param[2]), Convert.ToDouble(param[3])};
+            goStop(c);
+        }
+        else if(A==BUTTON5){
+            double[] c={Convert.ToDouble(param[1]), Convert.ToDouble(param[2]), Convert.ToDouble(param[3])};
+            goTo(c);
+        }  
+        else if(A==BUTTON6){ 
+            resetAlign();stopShip();
+            waitAction(Convert.ToDouble(param[1])); 
+        }
+        else if(A==BUTTON8){
+            double d = Convert.ToDouble(param[1]);
+            double t = Convert.ToDouble(param[2])*60;
+            double[] c={Convert.ToDouble(param[3]), Convert.ToDouble(param[4]), Convert.ToDouble(param[5])}; 
+            orbit(d,t,c);
+        }
+        else if(A==BUTTON10){ 
+           repeat();
+        }
+        else if(A==BUTTON11){
+            land(Convert.ToInt32(param[1]));
+        }
+        else if(A==BUTTON12){ 
+            dock(param[1]);
+        }
+    } 
+    else if(CurrentMission==toDo.Length){
+        startStopMission();CurrentMission=1;
+    }
+}
+
+public void startStopMission(){if(isMissionStarted){isMissionStarted=false;}else{isMissionStarted=true;}if(isResetTimer)isResetTimer=false;resetAction();} 
+public void restartMission(){CurrentMission=1;if(isResetTimer)isResetTimer=false;resetAction();}
+
+public void goStop(double[] toGo){   
+    bool isActionFinished = false; 
+    if(isShipLanded) 
+        unLand();  
+    else if(isShipDocked)  
+        unDock();
+    else{
+        debug(shipSpeed.ToString()+"    "+distanceShipDest(toGo).ToString());
+        if(isShipOnDestination(toGo, MIN_DISTANCE_TO_GO)){stopShip();isActionFinished=true;} 
+        else{
+            if(SSSensor.IsActive){ stopShip(); resetAlign();}
+            else{
+                if(Align(toGo) || isShipMoving){isShipMoving=true; moveShip(TFRONT,toGo,true);}
+            }
+        }
+    }
+    if(isActionFinished){isShipMoving=false;CurrentMission++;}
+}
+
+public void goTo(double[] toGo){
+    bool isActionFinished = false;
+    if(isShipLanded)
+        unLand();
+    else if(isShipDocked)
+        unDock();
+    else{ 
+        if(isShipOnDestination(toGo, MAX_DISTANCE_TO_GO)){isActionFinished=true;} 
+        else{
+            if(SSSensor.IsActive){ stopShip(); resetAlign();}
+            else if(Align(toGo)){moveShip(TFRONT,toGo,false);}
+        }
+    }
+    if(isActionFinished)CurrentMission++; 
+}
+
+public void waitAction(double t){
+    resetTimer();
+    if(wait(t)){
+        CurrentMission++;
+    }
+}
+
+public void orbit(double d, double t, double[] c){
+    AlignOrbit(d, c);
+    moveShip(TFRONT, c, true);
+    if(t>0){
+        resetTimer();
+        if(wait(t)){
+            isResetTimer = false; CurrentMission++; stopShip(); resetAlign();
+        }
+    }
+}
+public void repeat(){CurrentMission=1;isResetTimer=false;}
+ 
+public void land(int nbLand){    
+    bool isActionFinished = false;    
+    if(nbLand == detectLandingChanged()){stopShip();landShip(true);isActionFinished=true;isShipLanded=true;}  
+    else{moveShipForLanding(TBOTTOM);resetAlign();}  
+    if(isActionFinished)CurrentMission++;
+} 
+ 
+public void dock(string direction){ 
+    bool isActionFinished = false;
+    string TOMOVE = convertDirectionToThruster(direction); 
+    ConnectedConnector = GridTerminalSystem.GetBlockWithName(convertDirectionToConnector(direction)) as IMyShipConnector; 
+    if(ConnectedConnector.IsLocked){stopShip(); dockShip(ConnectedConnector, true); isActionFinished=true;isShipDocked=true;} 
+    else{moveShipForLanding(TOMOVE);resetAlign();} 
+    if(isActionFinished)CurrentMission++;
+}
+
+public void unLand(){ 
+    double[] p = {0,0,0}; 
+    string[] toDo = Mission.CustomName.Split('/');  
+    string[] param = null; 
+    bool pointFinded = false; 
+    for(int i = CurrentMission-1; i > 0 && !pointFinded ; i--){ 
+        param = toDo[i].Split(':'); 
+        if(param[0] == BUTTON4){ 
+            p[0] = Convert.ToDouble(param[1]); 
+            p[1]  = Convert.ToDouble(param[2]); 
+            p[2] = Convert.ToDouble(param[3]); 
+            pointFinded = true;
+        } 
+    }
+    if(pointFinded && !isShipOnDestination(p, DISTANCE_TO_GO)){
+        resetAlign();
+        landShip(false);
+        moveShip(TTOP,p,true);
+    }
+    if(LastDistance <= distanceShipDest(p) && LastDistance > 0){
+        stopShip();
+        isShipLanded = false;
+        LastDistance = -1;
+    }
+    resetTimer();  
+    if(wait(0.2))
+        LastDistance = distanceShipDest(p);
+}
+ 
+public void unDock(){  
+    double[] p = {0,0,0};  
+    string[] toDo = Mission.CustomName.Split('/');   
+    string[] param = null;
+    bool pointFinded = false; 
+    string direction = convertConnectorToDirection(ConnectedConnector.CustomName); 
+    string TOMOVE = convertDirectionToReverseThruster(direction); 
+    for(int i = CurrentMission-1; i > 0 && !pointFinded ; i--){  
+        param = toDo[i].Split(':');  
+        if(param[0] == BUTTON4){  
+            p[0] = Convert.ToDouble(param[1]);  
+            p[1]  = Convert.ToDouble(param[2]);  
+            p[2] = Convert.ToDouble(param[3]);  
+            pointFinded = true;
+        }  
+    }  
+    if(pointFinded && !isShipOnDestination(p, DISTANCE_TO_GO)){ 
+        resetAlign(); 
+        dockShip(ConnectedConnector, false); 
+        moveShip(TOMOVE,p,true);
+    }
+    if(LastDistance <= distanceShipDest(p) && LastDistance > 0){
+        stopShip();  
+        isShipDocked = false;
+        LastDistance = -1;
+    }
+    resetTimer();
+    if(wait(0.2)) 
+        LastDistance = distanceShipDest(p);
+}
+
+//------------------------------------------------------------------------
+//--------------------THRUSTER MOVEMENT--------------------
+//------------------------------------------------------------------------
+public void moveShip(string thrusters, double[] toGo, bool ReduceSpeed){
+    List<IMyTerminalBlock> TL = new List<IMyTerminalBlock>();
+    GridTerminalSystem.SearchBlocksOfName(thrusters, TL);
+    IMyThrust T = null;
+    double setSpeed = 0;
+    double distanceDest = distanceShipDest(toGo);
+    if(ReduceSpeed){
+        //debug(isSpeedAuthorize(toGo).ToString());
+        if(shipSpeed == 0){
+            for(int i = 0; i < TL.Count; i++){
+                T = TL[i] as IMyThrust;
+                if(distanceDest >= 1000){setSpeed = FAST_ACC_THRUSTER;}
+                else{setSpeed = SLOW_ACC_THRUSTER;}
+  
+                for(int y = 0; y < setSpeed; y++){
+                    T.GetActionWithName("IncreaseOverride").Apply(T);
+                }
+            }
+        }else{
+            if(!isSpeedAuthorize(toGo)){
+                stopShip();
+            }
+            else{
+                for(int i = 0; i < TL.Count; i++){
+                    T = TL[i] as IMyThrust;
+                    T.GetActionWithName("IncreaseOverride").Apply(T);
+                }
+            }
+        }
+    }
+    else{
+        for(int i = 0; i < TL.Count; i++){   
+            T = TL[i] as IMyThrust;
+            for(int y = 0; y < FAST_ACC_THRUSTER; y++){     
+                T.GetActionWithName("IncreaseOverride").Apply(T);   
+            }
+        }
+    }
+} 
+
+public void moveShipForLanding(string thrusters){   
+    List<IMyTerminalBlock> TL = new List<IMyTerminalBlock>();   
+    GridTerminalSystem.SearchBlocksOfName(thrusters, TL);   
+    IMyThrust T = null;
+    double setSpeed = 0;
+
+    if(shipSpeed == 0){   
+        for(int i = 0; i < TL.Count; i++){   
+            T = TL[i] as IMyThrust;
+            for(int y = 0; y < 10; y++){     
+               T.GetActionWithName("IncreaseOverride").Apply(T);   
+            }
+        }
+    }else{   
+          if(shipSpeed > 1){   
+              stopShip();
+          }   
+          else{   
+              for(int i = 0; i < TL.Count; i++){   
+                  T = TL[i] as IMyThrust;   
+                  T.GetActionWithName("IncreaseOverride").Apply(T);   
+              }   
+         } 
+    } 
+}
+
+public bool isSpeedAuthorize(double[] toGo){  
+    double d = distanceShipDest(toGo);
+    if( d >= 1000){ debug("0"); return true;}
+    else if (d < 1000 && d >= 300 && shipSpeed <= 25){ debug("1"); return true;}
+    else if (d < 300 && d >= 50 && shipSpeed <= 10){ debug("2"); return true;}
+    else if (d < 50 && d >= 10 && shipSpeed <= 2){ debug("3"); return true;}
+    else if (d < 10 && d >= 1 && shipSpeed <= 0.5){ debug("4"); resetAlign(); return true;}
+    else {debug("5");return false;}
+}
+
+public void stopShip(){
+    List<IMyTerminalBlock> TL = new List<IMyTerminalBlock>();
+    GridTerminalSystem.GetBlocksOfType<IMyThrust>(TL);
+    IMyThrust T = null;
+    for(int i = 0; i < TL.Count; i++){
+        T = TL[i] as IMyThrust;
+        for(int y = 0; y < FAST_ACC_THRUSTER; y++){
+            T.GetActionWithName("DecreaseOverride").Apply(T);
+        }
+    }
+}
+
+//------------------------------------------------------------------------  
+//------------------------GYRO MOVEMENT----------------------- 
+//------------------------------------------------------------------------  
+public bool Align(double[] Coord){  
+    double[] A=Coord;double[] B=getCurrentPosition();double[] C=getCurrentPositionBack();double[] D=getCurrentPositionTop();  
+    double[] AB=createVector(A,B);double[] BD=createVector(B,D);double[] BC=createVector(B,C);
+    bool PitchOK = AdjustPitch(AB, BD, Coord);
+    bool YawOK = AdjustYaw(AB, BC, Coord);
+    bool RollOK = AdjustRoll(AB, BD, Coord);
+  
+    if(PitchOK && YawOK && RollOK) return true; else return false;
+}
+  
+public bool AdjustRoll(double[] AB, double[] CD, double[] Coord){  
+    double coefX=AB[0]*CD[2]; double coefY=AB[2]*CD[0]; double speed=GYRO_SPEED;
+   
+    if(Math.Abs(round(coefX)-round(coefY))>=distanceShipDest(Coord)*20)
+        speed = GYRO_SPEED_MAX;
+    else
+        speed = GYRO_SPEED_MIN;  
+  
+    if(Math.Abs(round(coefX)-round(coefY))<=distanceShipDest(Coord)){stop(ROLL);return true;}  
+    else{if(coefX > coefY){moveFrontGyro(IR,speed);}else{moveFrontGyro(DR,speed);}return false;}  
+}
+ 
+public bool AdjustRoll2(double[] AB, double[] CD, double[] Coord, double a){  
+    double speed = GYRO_SPEED_MAX;  
+    Vector3D FDest = new Vector3D(AB[0], AB[1], AB[2]);  
+    Vector3D Ship = new Vector3D(CD[0], CD[1], CD[2]);  
+    double angle = AngleBetween(FDest,Ship);
+
+    double[] B=getCurrentPosition(); 
+    double[] C=getCurrentPositionBack();
+    double[] BC = createVector(B,C);
+    double crossP = AB[2]*BC[0]-AB[0]*BC[2];
+  
+    if(angle-a>=DISTANCE_PRECISION)speed = GYRO_SPEED_MAX;else speed = GYRO_SPEED;  
+    //debug("angle: "+angle.ToString()+" crossP: "+crossP.ToString());
+    if(angle-a>=-0.5 && angle-a <= 0.5){stop(ROLL);return true;}    
+    else{ 
+        if(crossP>0){ 
+            if(angle>a){ 
+                moveFrontGyro(DR,speed);} 
+            else{ 
+                moveFrontGyro(IR,speed);} 
+        } 
+        else{ 
+            if(angle>a){ 
+                moveFrontGyro(IR,speed);} 
+            else{ 
+                moveFrontGyro(DR,speed);} 
+        } 
+        return false; 
+        }  
+}
+    
+public bool AdjustPitch(double[] AB, double[] CD, double[] Coord){  
+    double speed = GYRO_SPEED;
+    Vector3D FDest=new Vector3D(AB[0],AB[1],AB[2]);
+    Vector3D Ship=new Vector3D(CD[0],CD[1],CD[2]);
+    double angle = AngleBetween(FDest, Ship);
+       
+    //if(!isShipFacingDest(Coord)||Math.Abs(angle-90)>=DISTANCE_PRECISION)speed=GYRO_SPEED_MAX;
+    //else speed=GYRO_SPEED_MIN;
+    speed = setGyroSpeed(Math.Abs(angle-90),PITCH);
+
+    //if(Math.Abs(FrontGyro.Pitch) >= GYRO_SPEED_MAX && speed == GYRO_SPEED_MIN) stop(PITCH);
+  
+    if(isShipFacingDest(Coord)&&Math.Abs(angle-90)<=0.5){stop(PITCH);return true;}
+    else{if(angle<90){moveFrontGyro(DP,speed);}else{moveFrontGyro(IP,speed);}}return false;
+}
+
+public bool AdjustPitch2(double[] AB, double[] CD, double[] Coord, double a){   
+    double speed = GYRO_SPEED; 
+    Vector3D FDest=new Vector3D(AB[0],AB[1],AB[2]); 
+    Vector3D Ship=new Vector3D(CD[0],CD[1],CD[2]); 
+    double angle = AngleBetween(FDest, Ship);
+    double crossP = AB[2]*CD[0]-AB[0]*CD[2];
+        
+    if(!isShipFacingDest(Coord)||Math.Abs(angle-a)>=DISTANCE_PRECISION)speed=GYRO_SPEED_MAX;else speed=GYRO_SPEED_MIN;     
+    if(isShipFacingDest(Coord)&&Math.Abs(angle-a)<=0.5){stop(PITCH);return true;} 
+    else{if(angle<0+a){moveFrontGyro(DP,speed);}else{moveFrontGyro(IP,speed);}}return false; 
+}
+
+public bool AdjustYaw2(double[] AB, double[] CD, double[] Coord, double a){ 
+    double speed = GYRO_SPEED_MAX; 
+    Vector3D FDest = new Vector3D(AB[0], AB[1], AB[2]); 
+    Vector3D Ship = new Vector3D(CD[0], CD[1], CD[2]); 
+    double angle = AngleBetween(FDest,Ship);  
+    double crossP = AB[2]*CD[0]-AB[0]*CD[2];
+ 
+    if(angle-a>=2)speed = GYRO_SPEED_MAX;else speed = GYRO_SPEED_MIN;
+    if(angle-a>=-0.5 && angle-a <= 0.5){stop(YAW);return true;}
+    else{
+        if(crossP>0){
+            if(angle>a){
+                moveFrontGyro(IY,speed);}
+            else{
+                moveFrontGyro(DY,speed);}
+        }
+        else{
+            if(angle>a){
+                moveFrontGyro(DY,speed);}
+            else{
+                moveFrontGyro(IY,speed);}
+        }
+        return false;
+        } 
+}
+
+public bool AdjustYaw(double[] AB, double[] CD, double[] Coord){
+    double speed = GYRO_SPEED;
+    Vector3D FDest = new Vector3D(AB[0], AB[1], AB[2]);
+    Vector3D Ship = new Vector3D(CD[0], CD[1], CD[2]);
+    double angle = AngleBetween(FDest,Ship); 
+    double crossP = AB[2]*CD[0]-AB[0]*CD[2];
+
+    //if(!isShipFacingDest(Coord)||angle>=DISTANCE_PRECISION)speed = GYRO_SPEED_MAX;
+    //else speed = GYRO_SPEED_MIN;
+    speed = setGyroSpeed(angle,YAW);
+    //debug(speed.ToString());
+
+//debug("MathAbsGyroYaw: "+ (Math.Abs(FrontGyro.Yaw)).ToString()+"   GSpeed:  "+speed.ToString());
+
+    //if(Math.Abs(FrontGyro.Yaw) >= GYRO_SPEED_MAX && speed == GYRO_SPEED_MIN) stop(YAW);
+
+    if(isShipFacingDest(Coord)&&angle<=1){stop(YAW);return true;} 
+    else{if(crossP>0){moveFrontGyro(IY,speed);}else{moveFrontGyro(DY,speed);}return false;}
+}
+
+public bool AlignOrbit(double d, double[] Coord){
+    double[] A=Coord;
+    double[] B=getCurrentPosition();
+    double[] C=getCurrentPositionBack();
+    double[] D=getCurrentPositionTop();
+    bool YawOK; bool RollOK;
+
+    double[] AB=createVector(A,B);double[] BD=createVector(B,D);double[] BC=createVector(B,C);
+
+    if(distanceShipDest(Coord)-DISTANCE_PRECISION>=d){
+    YawOK = AdjustYaw2(AB, BC, Coord,75);
+    RollOK = AdjustRoll2(AB, BD, Coord, 90);
+    }
+    else if(distanceShipDest(Coord)+DISTANCE_PRECISION<=d){
+        YawOK = AdjustYaw2(AB, BC, Coord,105); 
+        RollOK = AdjustRoll2(AB, BD, Coord, 90); 
+    }
+    else{ 
+        YawOK = AdjustYaw2(AB, BC, Coord,90);  
+        RollOK = AdjustRoll2(AB, BD, Coord, 90);  
+    }
+
+    if(YawOK && RollOK) return true; else return false;
+}
+
+//-------------------------------THIS IS WORKING-----------------------------
+public bool AlignX(){  
+    //Front + Back sur Y  
+    bool isAlignY, isAlignP, isAlignR = false;  
+    if(!isEqual(getFrontGyroY(),getBackGyroY())){isAlignP=false;  
+        if(isSuperior(getFrontGyroY(),getBackGyroY())){moveFrontGyro(DP, GYRO_SPEED);}  
+else{moveFrontGyro(IP, GYRO_SPEED);}}  
+    else{stop(PITCH);isAlignP=true;}  
+  
+    //Front + Back sur Z  
+    if(!isEqual(getFrontGyroZ(),getBackGyroZ())){isAlignY=false;  
+        if(isSuperior(getFrontGyroZ(),getBackGyroZ())){moveFrontGyro(DY, GYRO_SPEED);}  
+else{moveFrontGyro(IY, GYRO_SPEED);}}   
+    else{stop(YAW);isAlignY=true;}  
+  
+    //Front + Top sur Z  
+    if(!isEqual(getFrontGyroZ(),getTopGyroZ())){isAlignR=false;  
+        if(isSuperior(getTopGyroZ(),getFrontGyroZ())){moveFrontGyro(DR, GYRO_SPEED);}  
+else{moveFrontGyro(IR, GYRO_SPEED);}}   
+    else{stop(ROLL);isAlignR=true;}  
+  
+    return (isAlignP && isAlignY && isAlignR);  
+}  
+  
+public void AlignX_R(){  
+  
+}  
+  
+public void AlignY(){  
+  
+}  
+  
+public void AlignY_R(){  
+  
+}  
+  
+public void AlignZ(){  
+  
+}  
+  
+public void AlignZ_R(){  
+  
+}
+
+/*const double GYRO_SPEED_MIN = 0.03F;
+const double GYRO_SPEED = 0.1F;
+const double GYRO_SPEED_MAX = 0.6F;*/
+
+public double setGyroSpeed(double a, string action){
+    double s;
+    if( a >= 45) s=0.6;
+    else if (a < 45 && a >= 15) s=0.16;
+    else if (a < 15 && a >= 2) s=0.03;
+    else s=0.01;
+    if(getLastGyroSpeed(action)>s)stop(action);
+    setLastGyroSpeed(action, s);
+    return s;
+}
+
+public double getLastGyroSpeed(string a){
+    if(a==YAW)
+        return LGSY;
+    else if(a==PITCH)
+        return LGSP;
+    else if(a==ROLL)
+        return LGSR;
+    else
+        return 0;
+}
+public void setLastGyroSpeed(string a, double s){
+   if(a==YAW) 
+        LGSY=s;
+    else if(a==PITCH) 
+        LGSP=s;
+    else if(a==ROLL) 
+        LGSR=s;
+}
+ 
+
+
+public void moveFrontGyro(string Action, double GyroSpeed){  
+    if( (Action == IY ) && FrontGyro.Yaw <= GyroSpeed  
+      || (Action == IP ) && FrontGyro.Pitch <= GyroSpeed  
+      || (Action == IR ) && FrontGyro.Roll <= GyroSpeed  
+      || (Action == DY) && FrontGyro.Yaw >= -GyroSpeed   
+      || (Action == DP) && FrontGyro.Pitch >= -GyroSpeed   
+      || (Action == DR) && FrontGyro.Roll >= -GyroSpeed  
+      ){
+        FrontGyro.GetActionWithName(Action).Apply(FrontGyro);
+        BackGyro.GetActionWithName(Action).Apply(BackGyro);
+        TopGyro.GetActionWithName(Action).Apply(TopGyro);
+      }
+     //if(Math.Abs(FrontGyro.Yaw)*2 > GyroSpeed) stop(YAW);        
+     //if(Math.Abs(FrontGyro.Pitch)*2 > GyroSpeed) stop(PITCH);
+     //if(Math.Abs(FrontGyro.Roll)*2 > GyroSpeed) stop(ROLL);
+}  
+  
+public void stop(string Action){
+    if(Action == "Yaw"){
+        if( FrontGyro.Yaw<0 ){
+            FrontGyro.GetActionWithName(IY).Apply(FrontGyro);
+            BackGyro.GetActionWithName(IY).Apply(BackGyro); 
+            TopGyro.GetActionWithName(IY).Apply(TopGyro);
+        } else if( FrontGyro.Yaw > 0 ){  
+            FrontGyro.GetActionWithName(DY).Apply(FrontGyro); 
+            BackGyro.GetActionWithName(DY).Apply(BackGyro);  
+            TopGyro.GetActionWithName(DY).Apply(TopGyro);
+        }  
+    }  
+    if(Action == "Pitch"){   
+        if( FrontGyro.Pitch < 0 ){   
+            FrontGyro.GetActionWithName(IP).Apply(FrontGyro); 
+            BackGyro.GetActionWithName(IP).Apply(BackGyro);  
+            TopGyro.GetActionWithName(IP).Apply(TopGyro); 
+        } else if( FrontGyro.Pitch > 0 ){   
+            FrontGyro.GetActionWithName(DP).Apply(FrontGyro);  
+            BackGyro.GetActionWithName(DP).Apply(BackGyro);   
+            TopGyro.GetActionWithName(DP).Apply(TopGyro); 
+        }
+    }
+    if(Action == "Roll"){
+        if( FrontGyro.Roll < 0 ){
+            FrontGyro.GetActionWithName(IR).Apply(FrontGyro);
+            BackGyro.GetActionWithName(IR).Apply(BackGyro);
+            TopGyro.GetActionWithName(IR).Apply(TopGyro);
+        } else if( FrontGyro.Roll > 0 ){
+            FrontGyro.GetActionWithName(DR).Apply(FrontGyro);
+            BackGyro.GetActionWithName(DR).Apply(BackGyro);
+            TopGyro.GetActionWithName(DR).Apply(TopGyro); 
+        }
+    }
+}
+
+public void UpdateGPS(){
+    List<IMyTerminalBlock>ListGPS=new List<IMyTerminalBlock>();
+    GridTerminalSystem.SearchBlocksOfName("GPS",ListGPS);
+
+    for(int i=0;i<ListGPS.Count;i++){
+ //FRONT
+        if(ListGPS[i].CustomName.Substring(0,6) == GPS_FRONT_X){
+            ListGPS[i].SetCustomName("GPSF X: "+Math.Round(FrontGyro.GetPosition().GetDim(0), ROUND_GPS).ToString());   
+        }
+        if(ListGPS[i].CustomName.Substring(0,6) == GPS_FRONT_Y){
+            ListGPS[i].SetCustomName("GPSF Y: "+Math.Round(FrontGyro.GetPosition().GetDim(1), ROUND_GPS).ToString());     
+        }  
+        if(ListGPS[i].CustomName.Substring(0,6) == GPS_FRONT_Z){  
+            ListGPS[i].SetCustomName("GPSF Z: "+Math.Round(FrontGyro.GetPosition().GetDim(2), ROUND_GPS).ToString());     
+        }    
+ /* //BACK
+        if(ListGPS[i].CustomName.Substring(0,6) == GPS_BACK_X){  
+            ListGPS[i].SetCustomName("GPSB X: "+Math.Round(BackGyro.GetPosition().GetDim(0),ROUND_GPS).ToString());     
+        }  
+        if(ListGPS[i].CustomName.Substring(0,6) == GPS_BACK_Y){  
+             ListGPS[i].SetCustomName("GPSB Y: "+Math.Round(BackGyro.GetPosition().GetDim(1), ROUND_GPS).ToString());     
+        }    
+        if(ListGPS[i].CustomName.Substring(0,6) == GPS_BACK_Z){  
+            ListGPS[i].SetCustomName("GPSB Z: "+Math.Round(BackGyro.GetPosition().GetDim(2), ROUND_GPS).ToString());     
+        }  
+ //TOP  
+        if(ListGPS[i].CustomName.Substring(0,6) == GPS_TOP_X){  
+            ListGPS[i].SetCustomName("GPST X: "+Math.Round(TopGyro.GetPosition().GetDim(0),ROUND_GPS).ToString());      
+        }    
+        if(ListGPS[i].CustomName.Substring(0,6) == GPS_TOP_Y){  
+             ListGPS[i].SetCustomName("GPST Y: "+Math.Round(TopGyro.GetPosition().GetDim(1), ROUND_GPS).ToString());      
+        }  
+        if(ListGPS[i].CustomName.Substring(0,6) == GPS_TOP_Z){      
+           ListGPS[i].SetCustomName("GPST Z: "+Math.Round(TopGyro.GetPosition().GetDim(2), ROUND_GPS).ToString());      
+        }  */
+    }  
+}  
+  
+public void UpdateGyroInfo(){  
+    List<IMyTerminalBlock> PanelFrontGyroYaw = new List<IMyTerminalBlock>();   
+    GridTerminalSystem.SearchBlocksOfName("FrontGyroYaw", PanelFrontGyroYaw);   
+    List<IMyTerminalBlock> PanelFrontGyroPitch = new List<IMyTerminalBlock>();    
+    GridTerminalSystem.SearchBlocksOfName("FrontGyroPitch", PanelFrontGyroPitch);   
+    List<IMyTerminalBlock> PanelFrontGyroRoll = new List<IMyTerminalBlock>();    
+    GridTerminalSystem.SearchBlocksOfName("FrontGyroRoll", PanelFrontGyroRoll);   
+    if(PanelFrontGyroYaw.Count > 0)PanelFrontGyroYaw[0].SetCustomName("FrontGyroYaw: "+FrontGyro.Yaw.ToString());    
+    if(PanelFrontGyroPitch.Count > 0)PanelFrontGyroPitch[0].SetCustomName("FrontGyroPitch: "+FrontGyro.Pitch.ToString());    
+    if(PanelFrontGyroRoll.Count > 0)PanelFrontGyroRoll[0].SetCustomName("FrontGyroRoll: "+FrontGyro.Roll.ToString());   
+}
+
+//------------------------------------------------------------------------  
+//-------------INIT, CHECKING, RESET FUNCTIONS----------- 
+//------------------------------------------------------------------------ 
+public void resetAction()      {Action="";} 
+public void resetAlign()        {stop(YAW);stop(PITCH);stop(ROLL);}  
+public void resetMission()   {Mission.SetCustomName(MISSION_NAME);isMissionStarted=false;CurrentMission=1;isShipLanded=false;isShipDocked=false;if(isResetTimer)isResetTimer=false;resetAction();}
+public void resetTimer()       {if(!isResetTimer){Timer=DateTime.Now;isResetTimer=true;}}
+public void resetLGSeq(){List<IMyTerminalBlock>lg=new List<IMyTerminalBlock>();GridTerminalSystem.GetBlocksOfType<IMyLandingGear>(lg);List<IMyTerminalBlock>cn=new List<IMyTerminalBlock>();GridTerminalSystem.GetBlocksOfType<IMyShipConnector>(cn);string s="";bool c=true;if(lg.Count>0){for(int i=0;i<lg.Count&&c;i++){var builder=new StringBuilder();lg[i].GetActionWithName("SwitchLock").WriteValue(lg[i],builder);if(builder.ToString()!=s&&s!="")c=false;else s=builder.ToString();}if(c){isLandingGearSequenceInitialized=c;UnlockSequence=s;}}else if(cn.Count>0){for(int i=0;i<cn.Count&&c;i++){var builder = new StringBuilder();cn[i].GetActionWithName("SwitchLock").WriteValue(cn[i],builder);if(builder.ToString()!=s&&s!="")c=false;else s=builder.ToString();}if(c){isLandingGearSequenceInitialized=c;UnlockSequence=s;}}else{isLandingGearSequenceInitialized=true;UnlockSequence="Unlock";}}   
+public void resetThrusters() {List<IMyTerminalBlock> T=new List<IMyTerminalBlock>();GridTerminalSystem.GetBlocksOfType<IMyThrust>(T);for(int i=0;i<T.Count;i++){string n = T[i].CustomName;if(Contains(FTT,n.Split(new char[] { '(', ')' })[1])) T[i].SetCustomName(TFRONT);else if(Contains(BKT,n.Split(new char[] { '(', ')' })[1])) T[i].SetCustomName(TBACK);else if(Contains(LTT,n.Split(new char[] { '(', ')' })[1])) T[i].SetCustomName(TLEFT);else if(Contains(RTT,n.Split(new char[] { '(', ')' })[1])) T[i].SetCustomName(TRIGHT);else if(Contains(TPT,n.Split(new char[] { '(', ')' })[1])) T[i].SetCustomName(TTOP);else if(Contains(BMT,n.Split(new char[] { '(', ')' })[1])) T[i].SetCustomName(TBOTTOM);}areThrustersInitialized = checkThrusters() ? true : false;}
+
+public void resetShip(){ 
+    if(Action == BUTTON0){
+        areButtonsInitialized=false;
+        areThrustersInitialized=false;
+        isShipLanded=false;isShipDocked=false;
+        FrontGyro=null;BackGyro=null;TopGyro=null;Mission=null;
+        isResetTimer=false;
+        Serialize(); 
+        if(FrontGyro==null){ 
+            FrontGyro=GridTerminalSystem.GetBlockWithName(GYRO_FRONT_NAME) as IMyGyro; 
+            if(FrontGyro==null)setShipStatut("You cannot reset the ship without the FrontGyro (Gyroscope). It is missing or Named incorrectly.");   
+        } 
+        if(BackGyro==null){ 
+            BackGyro=GridTerminalSystem.GetBlockWithName(GYRO_BACK_NAME) as IMyGyro; 
+            if(BackGyro==null)setShipStatut("You cannot reset the ship without the BackGyro (Gyroscope). It is missing or Named incorrectly."); 
+        } 
+        if(TopGyro==null){   
+            TopGyro=GridTerminalSystem.GetBlockWithName(GYRO_TOP_NAME) as IMyGyro; 
+            if(TopGyro==null)setShipStatut("You cannot reset the ship without the TopGyro (Gyroscope). It is missing or Named incorrectly.");   
+        }   
+        if(!isReseting){
+            Thrusters=new List<IMyTerminalBlock>();
+            Buttons=new List<IMyTerminalBlock>();
+            isReseting=true;
+        }
+        resetButtons();
+        resetLGSeq();
+        resetThrusters();
+         
+        if(areButtonsInitialized && areThrustersInitialized && isLandingGearSequenceInitialized){
+            resetAction(); isReseting = false;Serialize();
+        }
+    }
+}
+
+public bool resetButtons(){  
+GridTerminalSystem.GetBlocksOfType<IMyTimerBlock>(Buttons);areButtonsInitialized=false;  
+if(Buttons.Count>0&&!areButtonsInitialized){  
+    for(int i=0;i<Buttons.Count;i++){
+            if(Buttons[i].CustomName == "0" || Buttons[i].CustomName == BUTTON0) Buttons[i].SetCustomName(BUTTON0);    
+    else if(Buttons[i].CustomName == "1"  || Buttons[i].CustomName == BUTTON1)  Buttons[i].SetCustomName(BUTTON1);    
+    else if(Buttons[i].CustomName == "2" || Buttons[i].CustomName == BUTTON2) Buttons[i].SetCustomName(BUTTON2);    
+    else if(Buttons[i].CustomName == "3" || Buttons[i].CustomName == BUTTON3) Buttons[i].SetCustomName(BUTTON3);    
+    else if(Buttons[i].CustomName == "4" || Buttons[i].CustomName == BUTTON4) Buttons[i].SetCustomName(BUTTON4);    
+    else if(Buttons[i].CustomName == "5" || Buttons[i].CustomName == BUTTON5) Buttons[i].SetCustomName(BUTTON5);    
+    else if(Buttons[i].CustomName == "6" || Buttons[i].CustomName == BUTTON6) Buttons[i].SetCustomName(BUTTON6);    
+    else if(Buttons[i].CustomName == "7" || Buttons[i].CustomName == BUTTON7) Buttons[i].SetCustomName(BUTTON7);    
+    else if(Buttons[i].CustomName == "8" || Buttons[i].CustomName == BUTTON8) Buttons[i].SetCustomName(BUTTON8);    
+    else if(Buttons[i].CustomName == "9" || Buttons[i].CustomName == BUTTON9) Buttons[i].SetCustomName(BUTTON9);    
+    else if(Buttons[i].CustomName == "10" || Buttons[i].CustomName == BUTTON10) Buttons[i].SetCustomName(BUTTON10);  
+    else {Buttons.RemoveAt(i); i--;}    
+}for(int i=0;i<Buttons.Count;i++){Buttons[i].GetActionWithName("DecreaseTriggerDelay").Apply(Buttons[i]);}areButtonsInitialized=true;return true;}else return false;}  
+ 
+public bool checkThrusterName(IMyThrust T){string n=T.CustomName;if(T.CustomName.Length<10)return false;else {n=n.Substring(0,10);return (n==TFRONT||n==TBACK||n==TLEFT||n==TRIGHT||n==TTOP||n==TBOTTOM);}}
+public bool checkThrusters(){bool r=true;List<IMyTerminalBlock> T=new List<IMyTerminalBlock>();GridTerminalSystem.GetBlocksOfType<IMyThrust>(T);for(int i = 0; i < T.Count && r==true; i++){r=checkThrusterName(T[i] as IMyThrust);}areThrustersInitialized=r;return r;}
+public bool checkLandingGearSequence(){return isLandingGearSequenceInitialized=UnlockSequence!="";}
+
+ 
+public bool initializeScript(){
+    bool isInitialized = true;
+    string e = "";
+
+    if(FrontGyro == null){
+        FrontGyro = GridTerminalSystem.GetBlockWithName(GYRO_FRONT_NAME) as IMyGyro;
+        if(FrontGyro == null)
+            e += "FrontGyro (Gyroscope) is missing or Named incorrectly. ";   
+    }   
+    if(BackGyro == null){   
+        BackGyro = GridTerminalSystem.GetBlockWithName(GYRO_BACK_NAME) as IMyGyro;   
+        if(BackGyro == null)   
+            e += "BackGyro (Gyroscope) is missing or Named incorrectly. ";   
+    }   
+    if(TopGyro == null){   
+        TopGyro = GridTerminalSystem.GetBlockWithName(GYRO_TOP_NAME) as IMyGyro;   
+        if(TopGyro == null)   
+            e += "TopGyro (Gyroscope) is missing or Named incorrectly. ";   
+    }   
+    if(Mission == null){    
+        List<IMyTerminalBlock> M = new List<IMyTerminalBlock>();    
+        GridTerminalSystem.SearchBlocksOfName(MISSION_NAME, M);   
+        if(M.Count > 0)   
+            Mission = M[0];   
+        else   
+            e += "Ship Mission (Control Panel) is missing or Named incorrectly. ";   
+    } 
+    if(SaveFile == null){ 
+        SaveFile = GridTerminalSystem.GetBlockWithName(SAVE_FILE_NAME) as IMyTextPanel; 
+        if(SaveFile == null) 
+            e += "SaveFile (TextPanel) is missing or Named incorrectly. "; 
+    } 
+    if(SSSensor == null){ 
+        SSSensor = GridTerminalSystem.GetBlockWithName(SENSOR_SMALL_SHIP_NAME) as IMySensorBlock; 
+        if(SSSensor == null) 
+            e += "SSSensor (Sensor for Small Ship detection) is missing or named incorrectly. "; 
+    } 
+    if(LSSensor == null){  
+        LSSensor = GridTerminalSystem.GetBlockWithName(SENSOR_LARGE_SHIP_NAME) as IMySensorBlock;  
+        if(LSSensor == null)  
+            e += "LSSensor (Sensor for Large Ship detection) is missing or named incorrectly. ";
+    }
+    if(SNSensor == null){
+        SNSensor = GridTerminalSystem.GetBlockWithName(SENSOR_STATION_NAME) as IMySensorBlock;
+        if(SNSensor == null)
+            e += "SNSensor (Sensor for detecting Station) is missing or named incorrectly. ";
+    }
+    if(ADSensor == null){
+        ADSensor = GridTerminalSystem.GetBlockWithName(SENSOR_ASTEROID_NAME) as IMySensorBlock;
+        if(ADSensor == null)
+            e += "ADSensor (Sensor for detecting Asteroid) is missing or named incorrectly.";
+    }
+    if(!checkThrusters()){
+        e += "Thrusters are not initialized. Please reset the ship. ";
+    }
+    if(!resetButtons()){
+        e += "Buttons (Timer Block) are not created. Name them from 0 to 10.";
+    }
+    if(!checkLandingGearSequence()){ 
+        e += "Landing Sequence is not initialized. Please, reset the ship";
+    }    
+   
+    if(e != ""){   
+        isInitialized = false;       
+        setShipStatut(e);   
+    } else {   
+        e = "Script is initialized | Ship is ready ";   
+        if(countStep() > 1){   
+            if(!isMissionStarted)   
+                e += "| Mission stopped ";   
+            else   
+                e = "| Mission started ";   
+            e += "| step "+CurrentMission.ToString()+" on "+(countStep()-1).ToString();   
+        }   
+        else{   
+            e += "| No mission set";   
+        }
+        setShipStatut(e);
+    }       
+    return isInitialized;   
+} 
+ 
+//------------------------------------------------------------------------   
+//--------------------DETECTION FUNCTIONS-------------------- 
+//------------------------------------------------------------------------ 
+public int detectLandingChanged(){List<IMyTerminalBlock>lg=new List<IMyTerminalBlock>();GridTerminalSystem.GetBlocksOfType<IMyLandingGear>(lg);int r=0;for(int i=0;i<lg.Count;i++){var builder=new StringBuilder();lg[i].GetActionWithName("SwitchLock").WriteValue(lg[i],builder);if(builder.ToString()!=UnlockSequence){r++;}}return r;} 
+public string detectConnectorChanged(){List<IMyTerminalBlock>C=new List<IMyTerminalBlock>();GridTerminalSystem.GetBlocksOfType<IMyShipConnector>(C);string n="";for(int i=0;i<C.Count;i++){IMyShipConnector c=C[i] as IMyShipConnector;if(c.IsLocked) n=c.CustomName;}return n;}
+
+
+//---------------------------THIS IS NOT WORKING-----------------------------------
+/* 
+ 
+bool isSmallShipDetected = false;  
+bool isLargeShipDetected = false;  
+bool isStationDetected = false;  
+bool isAsteroidDetected = false;      
+bool isStationAround = false;  
+bool isLargeShipAround = false;  
+bool isAsteroidAround = false; 
+ 
+public void setSensorAround(){ 
+    FrontSensor.SetValueFloat("Left",50); 
+    FrontSensor.SetValueFloat("Right",50); 
+    FrontSensor.SetValueFloat("Bottom",50); 
+    FrontSensor.SetValueFloat("Top",50); 
+    FrontSensor.SetValueFloat("Back",50); 
+    FrontSensor.SetValueFloat("Front",50); 
+} 
+ 
+public void setSensorFront(){  
+    FrontSensor.SetValueFloat("Left",1);  
+    FrontSensor.SetValueFloat("Right",1);  
+    FrontSensor.SetValueFloat("Bottom",1);  
+    FrontSensor.SetValueFloat("Top",1);  
+    FrontSensor.SetValueFloat("Back",1);  
+    FrontSensor.SetValueFloat("Front",50);  
+} 
+ 
+public void setSensorDetection(string Object){ 
+    if(Object == DETECT_SMALL_SHIPS){ 
+        if(!FrontSensor.DetectSmallShips) 
+            FrontSensor.GetActionWithName(DETECT_SMALL_SHIPS).Apply(FrontSensor); 
+    } 
+    else{ 
+        if(FrontSensor.DetectSmallShips){ 
+            FrontSensor.GetActionWithName(DETECT_SMALL_SHIPS).Apply(FrontSensor); 
+        } 
+    } 
+ 
+    if(Object == DETECT_LARGE_SHIPS){  
+        if(!FrontSensor.DetectLargeShips)  
+            FrontSensor.GetActionWithName(DETECT_LARGE_SHIPS).Apply(FrontSensor);  
+    }
+    else{
+        if(FrontSensor.DetectLargeShips){
+            FrontSensor.GetActionWithName(DETECT_LARGE_SHIPS).Apply(FrontSensor);
+        }
+    }
+ 
+    if(Object == DETECT_STATIONS){  
+        if(!FrontSensor.DetectStations)  
+            FrontSensor.GetActionWithName(DETECT_STATIONS).Apply(FrontSensor);  
+    }  
+    else{  
+        if(FrontSensor.DetectStations){  
+            FrontSensor.GetActionWithName(DETECT_STATIONS).Apply(FrontSensor);  
+        }  
+    } 
+ 
+    if(Object == DETECT_ASTEROIDS){  
+        if(!FrontSensor.DetectAsteroids)  
+            FrontSensor.GetActionWithName(DETECT_ASTEROIDS).Apply(FrontSensor);  
+    }  
+    else{  
+        if(FrontSensor.DetectAsteroids){  
+            FrontSensor.GetActionWithName(DETECT_ASTEROIDS).Apply(FrontSensor);  
+        }  
+    } 
+} 
+ 
+public void resetSensor(){ 
+    if(FrontSensor.DetectSmallShips) FrontSensor.GetActionWithName(DETECT_SMALL_SHIPS).Apply(FrontSensor); 
+    if(FrontSensor.DetectLargeShips) FrontSensor.GetActionWithName(DETECT_LARGE_SHIPS).Apply(FrontSensor); 
+    if(FrontSensor.DetectStations) FrontSensor.GetActionWithName(DETECT_STATIONS).Apply(FrontSensor); 
+    if(FrontSensor.DetectAsteroids) FrontSensor.GetActionWithName(DETECT_ASTEROIDS).Apply(FrontSensor); 
+} 
+ 
+public void refreshDetection(){ 
+   // setSensorFront(); 
+//SMALLSHIP 
+if(nbExec < 15 && nbExec > 5){ 
+    setSensorDetection(DETECT_SMALL_SHIPS);  
+    if(FrontSensor.DetectSmallShips){ 
+        if(FrontSensor.IsActive){ 
+            isSmallShipDetected = true; 
+        }  
+        else {  
+            isSmallShipDetected = false;  
+        } 
+    }     
+} 
+ 
+ 
+//resetSensor(); 
+//LARGESHIP 
+    setSensorDetection(DETECT_LARGE_SHIPS);   
+    if(FrontSensor.IsActive) isLargeShipDetected = true;else isLargeShipDetected = false;//resetSensor(); 
+//STATION 
+ 
+if(nbExec > 25 && nbExec < 40){ 
+    setSensorDetection(DETECT_STATIONS);   
+    if(FrontSensor.IsActive && FrontSensor.DetectStations) isStationDetected = true; 
+    else isStationDetected = false; 
+} 
+ 
+ 
+//ASTEROID 
+    setSensorDetection(DETECT_ASTEROIDS);   
+    if(FrontSensor.IsActive) isAsteroidDetected = true;else isAsteroidDetected = false;//resetSensor();  
+ 
+ 
+    setSensorAround(); 
+    setSensorDetection(DETECT_LARGE_SHIPS); 
+    if(FrontSensor.IsActive) isLargeShipAround = true; else isLargeShipAround = false;resetSensor(); 
+    setSensorDetection(DETECT_STATIONS); 
+    if(FrontSensor.IsActive) isStationAround = true; else isStationAround = false;resetSensor(); 
+    setSensorDetection(DETECT_ASTEROIDS); 
+    if(FrontSensor.IsActive) isAsteroidAround = true; else isAsteroidAround = false;resetSensor(); 
+} 
+*/

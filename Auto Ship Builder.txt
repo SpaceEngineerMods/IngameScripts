@@ -1,0 +1,687 @@
+int mode, step, direction, degree, initiateD, initiateB, initiateP, tutorial, loadscreen;                
+bool setup = true;  
+ 
+void Main()                    
+{                   
+string pistonsLCD= "pistonsLCD";                 
+string rotorLCD1= "rotorLCD1";                
+string rotorLCD2= "rotorLCD2";                
+string pistonsshipelevator = "pistonsshipelevator";                
+string pistonsuserelevator = "pistonsuserelevator";                
+string pistonsweldslow = "pistonsweldslow";                 
+string pistonsweldfast = "pistonsweldfast";                     
+string welders = "welders";           
+string warninglights = "warninglights";          
+string rotorsturntable = "rotorsturntable";                    
+string rotorsdisplay = "rotorsdisplay";      
+string rotordisplay1 = "rotordisplay1";     
+string rotordisplay2 = "rotordisplay2";     
+string rotordisplay3 = "rotordisplay3";     
+string rotordisplay4 = "rotordisplay4";     
+string UpperLimit = "UpperLimit";                   
+string LowerLimit = "LowerLimit";                   
+string Velocity = "Velocity";                
+if (setup==true)                   
+{                   
+setup=false;                   
+mode = 1000;             
+tutorial= -1;        
+loadscreen=1;              
+step = 0;                   
+direction = 0;                   
+degree = 1;                
+initiateD = 1;                
+initiateB = 1;                
+initiateP = 1;                
+}                   
+            
+   var lightsensor = GridTerminalSystem.GetBlockWithName("lightsensor") as IMyInteriorLight;                    
+   var sensorstep5 = GridTerminalSystem.GetBlockWithName("sensorstep5") as IMySensorBlock;        
+ var sensorstep3 = GridTerminalSystem.GetBlockWithName("sensorstep3") as IMySensorBlock;                
+   var lcd = GridTerminalSystem.GetBlockWithName("LCD") as IMyTextPanel;                 
+   var lcd2 = GridTerminalSystem.GetBlockWithName("LCD2") as IMyTextPanel;                 
+ IMyTerminalBlock d1 = GridTerminalSystem.GetBlockWithName("DisplayProjector1");                 
+ IMyTerminalBlock d2 = GridTerminalSystem.GetBlockWithName("DisplayProjector2");                 
+ IMyTerminalBlock d3 = GridTerminalSystem.GetBlockWithName("DisplayProjector3");                 
+ IMyTerminalBlock d4 = GridTerminalSystem.GetBlockWithName("DisplayProjector4");                 
+ IMyTerminalBlock d5 = GridTerminalSystem.GetBlockWithName("DisplayProjector5");                 
+ IMyTerminalBlock d6 = GridTerminalSystem.GetBlockWithName("DisplayProjector6");                 
+ IMyTerminalBlock d7 = GridTerminalSystem.GetBlockWithName("DisplayProjector7");                 
+ IMyTerminalBlock d8 = GridTerminalSystem.GetBlockWithName("DisplayProjector8");                 
+ IMyTerminalBlock d9 = GridTerminalSystem.GetBlockWithName("DisplayProjector9");                 
+ IMyTerminalBlock d10 = GridTerminalSystem.GetBlockWithName("DisplayProjector10");                 
+ IMyTerminalBlock d11 = GridTerminalSystem.GetBlockWithName("DisplayProjector11");                 
+ IMyTerminalBlock d12 = GridTerminalSystem.GetBlockWithName("DisplayProjector12");                 
+ IMyTerminalBlock b1 = GridTerminalSystem.GetBlockWithName("BuildProjector1");                
+ IMyTerminalBlock b2 = GridTerminalSystem.GetBlockWithName("BuildProjector2");                
+ IMyTerminalBlock b3 = GridTerminalSystem.GetBlockWithName("BuildProjector3");                 
+ IMyTerminalBlock b4 = GridTerminalSystem.GetBlockWithName("BuildProjector4");                 
+ IMyTerminalBlock b5 = GridTerminalSystem.GetBlockWithName("BuildProjector5");                 
+ IMyTerminalBlock b6 = GridTerminalSystem.GetBlockWithName("BuildProjector6");                 
+ IMyTerminalBlock b7 = GridTerminalSystem.GetBlockWithName("BuildProjector7");                 
+ IMyTerminalBlock b8 = GridTerminalSystem.GetBlockWithName("BuildProjector8");                 
+ IMyTerminalBlock b9 = GridTerminalSystem.GetBlockWithName("BuildProjector9");                 
+ IMyTerminalBlock b10 = GridTerminalSystem.GetBlockWithName("BuildProjector10");                 
+ IMyTerminalBlock b11 = GridTerminalSystem.GetBlockWithName("BuildProjector11");                 
+ IMyTerminalBlock b12 = GridTerminalSystem.GetBlockWithName("BuildProjector12");                 
+ IMyTerminalBlock b13 = GridTerminalSystem.GetBlockWithName("BuildProjector13");                 
+ IMyTerminalBlock box1 = GridTerminalSystem.GetBlockWithName("ProjectorBox1");                 
+ IMyTerminalBlock box2 = GridTerminalSystem.GetBlockWithName("ProjectorBox2");                 
+                 
+ if(initiateD==1)                
+{                
+d1.ApplyAction("OnOff_Off");                 
+d2.ApplyAction("OnOff_Off");                 
+d3.ApplyAction("OnOff_Off");                 
+d4.ApplyAction("OnOff_Off");                 
+d5.ApplyAction("OnOff_Off");                 
+d6.ApplyAction("OnOff_Off");                 
+d7.ApplyAction("OnOff_Off");                 
+d8.ApplyAction("OnOff_Off");                 
+d9.ApplyAction("OnOff_Off");                 
+d10.ApplyAction("OnOff_Off");                 
+d11.ApplyAction("OnOff_Off");                 
+d12.ApplyAction("OnOff_Off");                
+box1.ApplyAction("OnOff_Off");                
+box2.ApplyAction("OnOff_Off");             
+    lcd.WritePublicText(" ");                   
+    lcd.ShowTextureOnScreen();                   
+    lcd.ShowPublicTextOnScreen();             
+    lcd2.WritePublicText(" ");                    
+    lcd2.ShowTextureOnScreen();                    
+    lcd2.ShowPublicTextOnScreen();        
+initiateD=0;                
+}                
+                
+ if(initiateB==1)                 
+{                 
+b1.ApplyAction("OnOff_Off");                  
+b2.ApplyAction("OnOff_Off");                  
+b3.ApplyAction("OnOff_Off");                  
+b4.ApplyAction("OnOff_Off");                  
+b5.ApplyAction("OnOff_Off");                  
+b6.ApplyAction("OnOff_Off");                  
+b7.ApplyAction("OnOff_Off");                  
+b8.ApplyAction("OnOff_Off");                  
+b9.ApplyAction("OnOff_Off");                  
+b10.ApplyAction("OnOff_Off");                  
+b11.ApplyAction("OnOff_Off");                  
+b12.ApplyAction("OnOff_Off");                
+b13.ApplyAction("OnOff_Off");                
+sensorstep5.ApplyAction("OnOff_Off");           
+lightsensor.ApplyAction("OnOff_Off");                 
+initiateB=0;                 
+}                
+                
+var pistonuserelevator1 = GridTerminalSystem.GetBlockWithName("pistonuserelevator1") as IMyPistonBase;                
+double pistonuserelevator1d = Convert.ToDouble((pistonuserelevator1.DetailedInfo.Remove(0, 18)).TrimEnd('m'));                
+                
+                
+if(initiateP==1 && pistonuserelevator1d > 2.6)                
+{                
+ChangeGroupAction(pistonsuserelevator, Velocity, -.5f);                
+ChangeGroupAction(pistonsshipelevator, Velocity, -.5f);                
+ChangeGroupAction(pistonsweldslow, Velocity, -3f);                   
+ChangeGroupAction(pistonsweldfast, Velocity, -3f);                
+ChangeGroupAction(pistonsLCD, Velocity, -0.5f);                
+ChangeGroupAction(rotorLCD1, Velocity, -5f);                
+ChangeGroupAction(rotorLCD2, Velocity, 5f);              
+ ChangeGroupAction2(welders, "OnOff_Off");               
+              
+}                
+                
+else if (initiateP==1 && pistonuserelevator1d <2.6)                
+{                
+ChangeGroupAction(pistonsuserelevator, Velocity, -.5f);                
+ChangeGroupAction(pistonsshipelevator, Velocity, -.5f);                
+ChangeGroupAction(pistonsweldslow, Velocity, -3f);                   
+ChangeGroupAction(pistonsweldfast, Velocity, -3f);                
+ChangeGroupAction(pistonsLCD, Velocity, 0.5f);                
+ChangeGroupAction(rotorLCD1, Velocity, 5f);                
+ChangeGroupAction(rotorLCD2, Velocity, -5f);                
+ChangeGroupAction2(welders, "OnOff_Off");               
+initiateP=0;                
+}                
+                
+           
+//the display and build projections                  
+              
+//#1  Raven                  
+if(mode==1)                    
+{                    
+degree=1;                  
+box1.ApplyAction("OnOff_On");             
+box2.ApplyAction("OnOff_On");                  
+d12.ApplyAction("OnOff_Off");                  
+d5.ApplyAction("OnOff_Off");                  
+d1.ApplyAction("OnOff_On");                  
+d2.ApplyAction("OnOff_On");                  
+d3.ApplyAction("OnOff_On");                  
+d4.ApplyAction("OnOff_On");                  
+b1.ApplyAction("OnOff_On");                  
+b2.ApplyAction("OnOff_Off");                  
+b12.ApplyAction("OnOff_Off");                  
+lcd.WritePublicText(" RAVEN: \n Firepower           [|||||||||||||||||    ] \n Maneuverability  [||||||||||||||      ] \n Armor                  [||||||||||         ] \n Efficiency            [||||              ]");                   
+lcd.ShowTextureOnScreen();                   
+lcd.ShowPublicTextOnScreen();                  
+lcd.SetValue<float>("FontSize", 3);                  
+lcd2.WritePublicText(" Originally manufactored in 2080\n the Raven boasts a strong arsenal\n with nearly unmatched\n maneuverability.\n \n Equiped with 13 gatling guns and\n 2 reloadable rocket launchers.\n");                    
+lcd2.ShowTextureOnScreen();                    
+lcd2.ShowPublicTextOnScreen();                   
+lcd2.SetValue<float>("FontSize", 2);                  
+}                    
+                
+//#2  Miner                  
+if(mode==3)                     
+{                     
+degree=2;                   
+d1.ApplyAction("OnOff_Off");                  
+d6.ApplyAction("OnOff_Off");                  
+d2.ApplyAction("OnOff_On");                  
+d3.ApplyAction("OnOff_On");                  
+d4.ApplyAction("OnOff_On");                  
+d5.ApplyAction("OnOff_On");                  
+b2.ApplyAction("OnOff_On");                  
+b1.ApplyAction("OnOff_Off");                  
+b3.ApplyAction("OnOff_Off");                  
+lcd.WritePublicText("MINER:\n Firepower           [|||               ]\n Maneuverability  [||||||||||         ]\n Armor                  [||||||||||         ]\n Efficiency            [||||||||||         ]");                   
+lcd.ShowTextureOnScreen();                   
+lcd.ShowPublicTextOnScreen();       
+lcd.SetValue<float>("FontSize", 3);       
+lcd2.WritePublicText(" A simple but effective mining ship\n outfitted with standard mining\n equipment.");                    
+lcd2.ShowTextureOnScreen();                    
+lcd2.ShowPublicTextOnScreen();                   
+lcd2.SetValue<float>("FontSize", 2);            
+}                    
+                
+//#3  Welder                  
+if(mode==5)                     
+{                     
+degree=3;                   
+d2.ApplyAction("OnOff_Off");                  
+d7.ApplyAction("OnOff_Off");                  
+d3.ApplyAction("OnOff_On");                  
+d4.ApplyAction("OnOff_On");                  
+d5.ApplyAction("OnOff_On");                  
+d6.ApplyAction("OnOff_On");                  
+b3.ApplyAction("OnOff_On");                  
+b2.ApplyAction("OnOff_Off");                  
+b4.ApplyAction("OnOff_Off");                  
+lcd.WritePublicText("WELDER:\n Firepower           [|                 ]\n Maneuverability [|||||||||||||||      ]\n Armor                 [|||||              ]\n Efficiency           [||||||||||||||||     ]");                   
+lcd.ShowTextureOnScreen();                   
+lcd.ShowPublicTextOnScreen();       
+lcd.SetValue<float>("FontSize", 3);       
+lcd2.WritePublicText(" A small and efficient welding ship");                    
+lcd2.ShowTextureOnScreen();                    
+lcd2.ShowPublicTextOnScreen();                   
+lcd2.SetValue<float>("FontSize", 2);                    
+}                    
+                
+//#4  Grinder                  
+if(mode==7)                      
+{                      
+degree=4;                    
+d3.ApplyAction("OnOff_Off");                  
+d8.ApplyAction("OnOff_Off");                  
+d4.ApplyAction("OnOff_On");                  
+d5.ApplyAction("OnOff_On");                  
+d6.ApplyAction("OnOff_On");                  
+d7.ApplyAction("OnOff_On");                  
+b4.ApplyAction("OnOff_On");                  
+b3.ApplyAction("OnOff_Off");                  
+b5.ApplyAction("OnOff_Off");                   
+lcd.WritePublicText("Grinder");                   
+lcd.ShowTextureOnScreen();                   
+lcd.ShowPublicTextOnScreen();      
+lcd.WritePublicText("GRINDER:\n Firepower           [|||||             ]\n Maneuverability [|||||||||||||||      ]\n Armor                 [|||||              ]\n Efficiency           [|||||||||||||||      ]");                   
+lcd.ShowTextureOnScreen();                   
+lcd.ShowPublicTextOnScreen();       
+lcd.SetValue<float>("FontSize", 3);       
+lcd2.WritePublicText(" A small and efficient grinding ship");                    
+lcd2.ShowTextureOnScreen();                    
+lcd2.ShowPublicTextOnScreen();                   
+lcd2.SetValue<float>("FontSize", 2);           
+}                    
+                
+//#5  Hauler                  
+if(mode==9)                    
+{                    
+degree=1;                    
+d4.ApplyAction("OnOff_Off");                  
+d9.ApplyAction("OnOff_Off");                  
+d5.ApplyAction("OnOff_On");                  
+d6.ApplyAction("OnOff_On");                  
+d7.ApplyAction("OnOff_On");                  
+d8.ApplyAction("OnOff_On");                  
+b5.ApplyAction("OnOff_On");                  
+b4.ApplyAction("OnOff_Off");                  
+b6.ApplyAction("OnOff_Off");                   
+lcd.WritePublicText("HAULER:\n Firepower           [                 ]\n Maneuverability [|||||||||||||||      ]\n Armor                 [|||||              ]\n Efficiency           [||||||||||||||||     ]");                 
+lcd.ShowTextureOnScreen();                   
+lcd.ShowPublicTextOnScreen();           
+lcd.ShowPublicTextOnScreen();       
+lcd.SetValue<float>("FontSize", 3);       
+lcd2.WritePublicText(" A ship used to relocate wrecks or\n otherwise un-powered ships. Be mindful\n of explosions.");                    
+lcd2.ShowTextureOnScreen();                    
+lcd2.ShowPublicTextOnScreen();                   
+lcd2.SetValue<float>("FontSize", 2);           
+}                    
+                
+//#6  Decoy                  
+if(mode==11)                     
+{                     
+degree=2;                    
+d5.ApplyAction("OnOff_Off");                  
+d10.ApplyAction("OnOff_Off");                  
+d6.ApplyAction("OnOff_On");                  
+d7.ApplyAction("OnOff_On");                  
+d8.ApplyAction("OnOff_On");                  
+d9.ApplyAction("OnOff_On");                  
+b6.ApplyAction("OnOff_On");                  
+b5.ApplyAction("OnOff_Off");                  
+b7.ApplyAction("OnOff_Off");                   
+lcd.WritePublicText("DECOY:\n Firepower           [                 ]\n Maneuverability [|||||||||||||||      ]\n Armor                 [||||||||||          ]\n Efficiency           [|||||||||||||||      ]");                   
+lcd.ShowTextureOnScreen();                   
+lcd.ShowPublicTextOnScreen();           
+lcd.ShowPublicTextOnScreen();       
+lcd.SetValue<float>("FontSize", 3);       
+lcd2.WritePublicText(" A drone used to divert turret fire \n and surveillance.");                    
+lcd2.ShowTextureOnScreen();                    
+lcd2.ShowPublicTextOnScreen();                   
+lcd2.SetValue<float>("FontSize", 2);                  
+}                    
+                
+//#7  Scout                  
+if(mode==13)                     
+{                     
+degree=3;                    
+d6.ApplyAction("OnOff_Off");                  
+d11.ApplyAction("OnOff_Off");                  
+d7.ApplyAction("OnOff_On");                  
+d8.ApplyAction("OnOff_On");                  
+d9.ApplyAction("OnOff_On");                  
+d10.ApplyAction("OnOff_On");                  
+b7.ApplyAction("OnOff_On");                  
+b6.ApplyAction("OnOff_Off");                  
+b8.ApplyAction("OnOff_Off");                   
+lcd.WritePublicText("SCOUT:\n Firepower           [                 ]\n Maneuverability [|||||||||||||||||||   ]\n Armor                 [||||||||            ]\n Efficiency           [|||||||||||||||      ]");                   
+lcd.ShowTextureOnScreen();                   
+lcd.ShowPublicTextOnScreen();           
+lcd.ShowPublicTextOnScreen();       
+lcd.SetValue<float>("FontSize", 3);       
+lcd2.WritePublicText(" A quick unarmed passenger ship that \n can be used for transport \n and surveillance.");                    
+lcd2.ShowTextureOnScreen();                    
+lcd2.ShowPublicTextOnScreen();                   
+lcd2.SetValue<float>("FontSize", 2);                     
+}                    
+                
+//#8  Drone Control                  
+if(mode==15)                      
+{                      
+degree=4;                    
+d7.ApplyAction("OnOff_Off");                  
+d12.ApplyAction("OnOff_Off");                  
+d8.ApplyAction("OnOff_On");                  
+d9.ApplyAction("OnOff_On");                  
+d10.ApplyAction("OnOff_On");                  
+d11.ApplyAction("OnOff_On");                  
+b8.ApplyAction("OnOff_On");                  
+b7.ApplyAction("OnOff_Off");                  
+b9.ApplyAction("OnOff_Off");                   
+lcd.WritePublicText("DRONE CONTROL:\n Firepower           [|||||              ]\n Maneuverability [|||||              ]\n Armor                 [|||||||||||||        ]\n Efficiency           [||||||||||          ]");                   
+lcd.ShowTextureOnScreen();                   
+lcd.ShowPublicTextOnScreen();           
+lcd.ShowPublicTextOnScreen();       
+lcd.SetValue<float>("FontSize", 3);       
+lcd2.WritePublicText(" Equipped with two cockpits. While \n one pilot can control remote \n drones the other can fend off \n attackers.");                    
+lcd2.ShowTextureOnScreen();                    
+lcd2.ShowPublicTextOnScreen();                   
+lcd2.SetValue<float>("FontSize", 2);                     
+}                    
+                
+//#9  Intruder                 
+if(mode==17)                    
+{                    
+degree=1;                    
+d8.ApplyAction("OnOff_Off");                  
+d1.ApplyAction("OnOff_Off");                  
+d9.ApplyAction("OnOff_On");                  
+d10.ApplyAction("OnOff_On");                  
+d11.ApplyAction("OnOff_On");                  
+d12.ApplyAction("OnOff_On");                  
+b9.ApplyAction("OnOff_On");                  
+b8.ApplyAction("OnOff_Off");                  
+b10.ApplyAction("OnOff_Off");                   
+lcd.WritePublicText("INTRUDER:\n Firepower           [|||||||||           ]\n Maneuverability [||||||||||          ]\n Armor                 [||||||||||          ]\n Efficiency           [||||||||           ]");                   
+lcd.ShowTextureOnScreen();                   
+lcd.ShowPublicTextOnScreen();           
+lcd.ShowPublicTextOnScreen();       
+lcd.SetValue<float>("FontSize", 3);       
+lcd2.WritePublicText("A remote controlled drone. \n Can set explosives at an \n enemy's base");                    
+lcd2.ShowTextureOnScreen();                    
+lcd2.ShowPublicTextOnScreen();                   
+lcd2.SetValue<float>("FontSize", 2);                
+}                    
+                
+//#10  Raider                 
+if(mode==19)                     
+{                     
+degree=2;                    
+d9.ApplyAction("OnOff_Off");                  
+d2.ApplyAction("OnOff_Off");                  
+d10.ApplyAction("OnOff_On");                  
+d11.ApplyAction("OnOff_On");                  
+d12.ApplyAction("OnOff_On");                  
+d1.ApplyAction("OnOff_On");                  
+b10.ApplyAction("OnOff_On");                  
+b9.ApplyAction("OnOff_Off");                  
+b11.ApplyAction("OnOff_Off");                   
+lcd.WritePublicText("RAIDER: \n Firepower           [|||||||||||||||      ] \n Maneuverability  [|||||||||||||||     ] \n Armor                  [|||||||||||        ] \n Efficiency            [||||||             ]");                   
+lcd.ShowTextureOnScreen();                   
+lcd.ShowPublicTextOnScreen();                  
+lcd.SetValue<float>("FontSize", 3);                  
+lcd2.WritePublicText(" Produced by C-Industries. \n While not as powerful as the\n Raven, lacking the rocket launchers, \n the Raider is more agile in combat \n and has a higher armor rating.");                    
+lcd2.ShowTextureOnScreen();                    
+lcd2.ShowPublicTextOnScreen();       
+   lcd2.SetValue<float>("FontSize", 2);    
+}                    
+                
+//#11  Cargo                  
+               
+if(mode==21)                     
+{                     
+degree=3;                    
+d10.ApplyAction("OnOff_Off");                  
+d3.ApplyAction("OnOff_Off");                  
+d11.ApplyAction("OnOff_On");                  
+d12.ApplyAction("OnOff_On");                  
+d1.ApplyAction("OnOff_On");                  
+d2.ApplyAction("OnOff_On");                  
+b11.ApplyAction("OnOff_On");                  
+b10.ApplyAction("OnOff_Off");                  
+b12.ApplyAction("OnOff_Off");                   
+lcd.WritePublicText("CARGO: \n Firepower           [                    ] \n Maneuverability  [|||||             ] \n Armor                  [||||||             ] \n Efficiency            [|||||              ]");                   
+lcd.ShowTextureOnScreen();                   
+lcd.ShowPublicTextOnScreen();                  
+lcd.SetValue<float>("FontSize", 3);                  
+lcd2.WritePublicText(" Designed by C-Industries. \n A cargo transport vessel");                    
+lcd2.ShowTextureOnScreen();                    
+lcd2.ShowPublicTextOnScreen();       
+   lcd2.SetValue<float>("FontSize", 2);         
+    
+}                    
+                
+//#12  Double Decker Couch                  
+           
+if(mode==23)                     
+{                     
+	degree=4;                   
+    d11.ApplyAction("OnOff_Off");                 
+	d4.ApplyAction("OnOff_Off");                 
+	d12.ApplyAction("OnOff_On");                 
+	d1.ApplyAction("OnOff_On");                 
+	d2.ApplyAction("OnOff_On");                 
+    d3.ApplyAction("OnOff_On");                 
+	b12.ApplyAction("OnOff_On");                 
+	b11.ApplyAction("OnOff_Off");                 
+	b1.ApplyAction("OnOff_Off");                  
+    lcd.WritePublicText("Double Decker Couch:\n Firepower           [?????????]\n Maneuverability  [?????????]\n Armor                  [?????????]\n Efficiency            [?????????]");                  
+    lcd.ShowTextureOnScreen();                  
+    lcd.ShowPublicTextOnScreen();                 
+    lcd.SetValue<float>("FontSize", 3);                 
+    lcd2.WritePublicText(" Have you ever wanted to watch a movie \n in space with your friends but didn't\n have enough seats? Consider your\n problem solved! Introducing \n The Double Decker Couch! Your one stop \n for cruising comfort.");                   
+    lcd2.ShowTextureOnScreen();                   
+    lcd2.ShowPublicTextOnScreen();      
+       lcd2.SetValue<float>("FontSize", 2);        
+}                 
+            
+            
+//step1               
+             
+if(step==1)                 
+{                 
+mode= 10000;                 
+b13.ApplyAction("OnOff_On");         
+ChangeGroupAction2(warninglights, "OnOff_On");  
+ChangeGroupAction(rotorLCD1, Velocity, -5f);                
+ChangeGroupAction(rotorLCD2, Velocity, 5f);                
+ChangeGroupAction(pistonsLCD, Velocity, -.5f);                   
+ChangeGroupAction(pistonsweldslow, Velocity, 2f);                   
+ChangeGroupAction(pistonsweldfast, Velocity, 2f);                 
+ChangeGroupAction(rotorLCD1, Velocity, -5f);                
+ChangeGroupAction(rotorLCD2, Velocity, 5f);           
+initiateD=1;                
+step=2;                
+}               
+              
+  var welder = GridTerminalSystem.GetBlockWithName("welder") as IMyShipWelder;                
+var pistonweldslow1 = GridTerminalSystem.GetBlockWithName("pistonweldslow1") as IMyPistonBase;                
+double pistonweldslow1d = Convert.ToDouble((pistonweldslow1.DetailedInfo.Remove(0, 18)).TrimEnd('m'));                
+                
+if(step==2 && pistonweldslow1d > 7.89)                
+{               
+     ChangeGroupAction(pistonsweldfast, Velocity, -.15f);          
+    ChangeGroupAction(pistonsweldslow, Velocity, -.15f);              
+    ChangeGroupAction2(welders, "OnOff_On");        
+    sensorstep3.ApplyAction("OnOff_On");          
+    step=3;              
+}                      
+if(step==3 && lightsensor.Enabled)         
+{              
+ChangeGroupAction(pistonsweldslow, Velocity, -4f);               
+ChangeGroupAction(pistonsweldfast, Velocity, -4f);              
+ChangeGroupAction(pistonsshipelevator, Velocity, 1f);              
+ChangeGroupAction2(welders, "OnOff_Off");           
+ChangeGroupAction2(warninglights, "OnOff_Off");        
+sensorstep3.ApplyAction("OnOff_Off");        
+lightsensor.ApplyAction("OnOff_Off");          
+step=4;              
+}              
+              
+var pistonshipelevator1 = GridTerminalSystem.GetBlockWithName("pistonshipelevator1") as IMyPistonBase;                 
+double pistonshipelevator1d = Convert.ToDouble((pistonshipelevator1.DetailedInfo.Remove(0, 18)).TrimEnd('m'));                
+              
+if(step==4 && pistonshipelevator1d == 3.9)              
+{              
+ChangeGroupAction(pistonsuserelevator, Velocity, 1.4f);             
+step=5;             
+}              
+             
+if(step==5 && pistonshipelevator1d > 7.89 )             
+{             
+sensorstep5.ApplyAction("OnOff_On");              
+step=6;            
+}             
+            
+if(step==6 && lightsensor.Enabled)             
+{            
+initiateD = 1;                
+initiateB = 1;                
+initiateP = 1;             
+mode = 1;             
+step = 0;             
+            
+}             
+             
+//the buttons that the user presses to control the system                  
+var lightadd = GridTerminalSystem.GetBlockWithName("lightadd") as IMyInteriorLight;                     
+if(lightadd.Enabled)                     
+{                     
+    mode = mode + 1;                     
+    direction=1;                   
+    lightadd.ApplyAction("OnOff_Off");          
+    tutorial = tutorial + 1;         
+loadscreen = loadscreen + 1;                    
+}                     
+                     
+var lightsubtract = GridTerminalSystem.GetBlockWithName("lightsubtract") as IMyInteriorLight;                    
+                 
+if(lightsubtract.Enabled)                
+{                     
+    mode = mode - 1;                     
+    direction=0;                   
+    lightsubtract.ApplyAction("OnOff_Off");          
+    tutorial = tutorial + 1;      
+loadscreen = loadscreen + 1;                       
+}                     
+                     
+var lightstep = GridTerminalSystem.GetBlockWithName("lightstep") as IMyInteriorLight;                 
+                 
+if(lightstep.Enabled && tutorial>7)                    
+{                     
+    step=1;                   
+    lightstep.ApplyAction("OnOff_Off");      
+    tutorial = tutorial + 1;       
+loadscreen = loadscreen + 1;                    
+}                  
+else if(lightstep.Enabled && tutorial<=7)             
+{             
+loadscreen = loadscreen + 1;            
+    tutorial = tutorial + 1;             
+    lightstep.ApplyAction("OnOff_Off");                   
+}        
+        
+if(loadscreen==1)              
+{              
+    lcd2.WritePublicText(" Programable Small Ship Factory 1.0 \n \n Press any key to continue...");                   
+    lcd2.ShowTextureOnScreen();                   
+    lcd2.ShowPublicTextOnScreen();                  
+    lcd2.SetValue<float>("FontSize", 2);             
+    lcd.WritePublicText(" Where's the Any key?");                   
+    lcd.ShowTextureOnScreen();                    
+    lcd.ShowPublicTextOnScreen();                   
+    lcd.SetValue<float>("FontSize", 2);                  
+}        
+                 
+if(tutorial==1)             
+{             
+    lcd.WritePublicText("Keep in mind that this is the first release.\n The ships and features haven't been\n completely fleshed out yet. I plan \n to replace or modify many ships as to\n utilize the upcoming automatic\n ammo transfer feature. ");                  
+    lcd.ShowTextureOnScreen();                  
+    lcd.ShowPublicTextOnScreen();                 
+    lcd.SetValue<float>("FontSize", 2);                 
+    lcd2.WritePublicText(" Standard usage is quite easy.\n Press the blue button to rotate left, \nthe red button to rotate right\n and the black button to build.\n\n Press any key to continue...");                   
+    lcd2.ShowTextureOnScreen();                   
+    lcd2.ShowPublicTextOnScreen();      
+       lcd2.SetValue<float>("FontSize", 2);              
+}        
+             
+if(tutorial==3)             
+{             
+    lcd.WritePublicText(" An additional thanks to:\n \n phoenixcorp13  \n Spartan322 \n lttwinkie  \n LittleTerror");                  
+    lcd.ShowTextureOnScreen();                  
+    lcd.ShowPublicTextOnScreen();                 
+    lcd.SetValue<float>("FontSize", 2.8f);                 
+    lcd2.WritePublicText(" Special thanks to Coren for lending\n me his ships. \n \n A big thanks to NikMik 87 for \n basically tutoring me in C# \n and answering any and all questions.");                   
+    lcd2.ShowTextureOnScreen();                   
+    lcd2.ShowPublicTextOnScreen();      
+       lcd2.SetValue<float>("FontSize", 2);             
+}             
+                 
+                 
+if(tutorial==5)             
+{             
+    mode=1;             
+    tutorial=100;             
+}             
+                 
+//determines the direction the rotors spin. display and turntable spin in oposite directions to keep the blueprint facing the user.                  
+                   
+if(direction==1)                   
+{                   
+ ChangeGroupAction(rotorsdisplay, Velocity, 20);                   
+ ChangeGroupAction(rotorsturntable, Velocity, -20);                   
+}                   
+                   
+if(direction==0)                    
+{                    
+ ChangeGroupAction(rotorsdisplay, Velocity, -20);                   
+ ChangeGroupAction(rotorsturntable, Velocity, 20);                    
+}                   
+    
+// determines the stopping point of the rotors. display and turntable spin in oposite directions so they have oposite stopping points                  
+if(degree==1)                   
+{                   
+         ChangeGroupAction(rotorsdisplay, LowerLimit, 0);                    
+         ChangeGroupAction(rotorsdisplay, UpperLimit, 0);                   
+         ChangeGroupAction(rotorsturntable, LowerLimit, 0);                     
+         ChangeGroupAction(rotorsturntable, UpperLimit, 0);       
+}                   
+                   
+if(degree==2)                   
+{                   
+         ChangeGroupAction(rotorsdisplay, LowerLimit, 90);                   
+         ChangeGroupAction(rotorsdisplay, UpperLimit, 90);                 
+         ChangeGroupAction(rotorsturntable, LowerLimit, 270);                    
+         ChangeGroupAction(rotorsturntable, UpperLimit, 270);         
+}                   
+                   
+if(degree==3)                   
+{                   
+         ChangeGroupAction(rotorsdisplay, LowerLimit, 180);                     
+         ChangeGroupAction(rotorsdisplay, UpperLimit, 180);                   
+         ChangeGroupAction(rotorsturntable, LowerLimit, 180);                      
+         ChangeGroupAction(rotorsturntable, UpperLimit, 180);     
+}                   
+                   
+if(degree==4)                   
+{                   
+     
+         ChangeGroupAction(rotorsdisplay, LowerLimit, 270);                      
+         ChangeGroupAction(rotorsdisplay, UpperLimit, 270);                   
+         ChangeGroupAction(rotorsturntable, LowerLimit, 90);                      
+         ChangeGroupAction(rotorsturntable, UpperLimit, 90);     
+}       
+  
+                   
+if(mode==25)                     
+{                     
+mode=1;                     
+}                     
+                     
+if(mode==-1)                     
+{                    
+mode=23;                     
+}                   
+                   
+}                   
+ //Function for applying actions to an entire group of modules.                     
+    void ChangeGroupAction(String GroupName , String Action, float value)                      
+{                     
+    var Group = new List <IMyBlockGroup>();                     
+    Group = GridTerminalSystem.BlockGroups;                     
+    // Loop through the entire list of groups                     
+    for ( int i = 0 ; i < Group.Count ; i++ )                     
+        {                     
+        // And find the group you are looking for                     
+        if ( Group[i].Name == GroupName )                     
+            {                     
+            var GroupCont = Group[i].Blocks;                     
+            // Loop through all blocks in the group and apply the new action                     
+            for ( int c = 0 ; c < GroupCont.Count ; c++ )                                     
+                {                     
+                    GroupCont[c].SetValue<float>(Action, value);                     
+                }                     
+            }                     
+        }                      
+}              
+   void ChangeGroupAction2(String GroupName , String Action)                     
+    {                 
+              
+    var Group = new List <IMyBlockGroup>();                      
+    Group = GridTerminalSystem.BlockGroups;                      
+    // Loop through the entire list of groups                      
+    for ( int i = 0 ; i < Group.Count ; i++ )                      
+        {                      
+        // And find the group you are looking for                      
+        if ( Group[i].Name == GroupName )                      
+            {                      
+            var GroupCont = Group[i].Blocks;                      
+            // Loop through all blocks in the group and apply the new action                      
+            for ( int c = 0 ; c < GroupCont.Count ; c++ )                                      
+                {                      
+                    GroupCont[c].ApplyAction(Action);                      
+                }                      
+            }                      
+        }                      
+}              
+              
